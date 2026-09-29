@@ -169,8 +169,9 @@
       <b>할일 목록에 없던 추가 작업</b>
       <ul>
         <li>에디터 도구: <code>VoxelCharacterBuilder</code>, <code>LevelBuilder</code>, <code>PreviewCapture</code></li>
-        <li>에디터 도구: <code>AnimationBuilder</code> (Tools → Voxel → Build Animations)</li>
-        <li>PlayMode 자동 테스트: <code>PlayerMovementTests.cs</code>(8개), <code>PlayerAnimationTests.cs</code>(4개), 공통 준비 <code>PlayModeTestBase.cs</code></li>
+        <li>에디터 도구: <code>AnimationBuilder</code> (Build Animations), <code>ItemBuilder</code> (Build Item)</li>
+        <li>새 폴더: <code>Assets/Meshes</code>(금화 메쉬), <code>Assets/Materials/Item</code>(금 머티리얼)</li>
+        <li>PlayMode 자동 테스트: <code>PlayerMovementTests.cs</code>(8개), <code>PlayerAnimationTests.cs</code>(4개), <code>ItemTests.cs</code>(5개), 공통 준비 <code>PlayModeTestBase.cs</code></li>
         <li><code>캐릭터 미리보기.html</code> (사용자 요청)</li>
       </ul>
     </div>
@@ -216,12 +217,12 @@
       { id: "3-6", text: "애니메이션 전환 테스트 (자동 테스트 4개 통과 · 직접 플레이 확인 대기)", done: false },
     ]},
     { no: 4, title: "아이템 추가", items: [
-      { id: "4-1", text: "아이템 모델 / 머티리얼 제작", done: false },
-      { id: "4-2", text: "<code>Item</code>: 회전 + 위아래로 떠다니는 연출", done: false },
-      { id: "4-3", text: "<code>Item</code>: Trigger Collider로 획득 처리", done: false },
-      { id: "4-4", text: "아이템 프리팹 저장 후 타일 위에 3개 배치", done: false },
-      { id: "4-5", text: "<code>UIManager</code>: <code>아이템 0 / 3</code> 표시", done: false },
-      { id: "4-6", text: "아이템 획득 및 UI 갱신 테스트", done: false },
+      { id: "4-1", text: "아이템 모델 / 머티리얼 제작 (금화(엽전) 복셀 모델)", done: true },
+      { id: "4-2", text: "<code>Item</code>: 회전 + 위아래로 떠다니는 연출", done: true },
+      { id: "4-3", text: "<code>Item</code>: Trigger Collider로 획득 처리 (작아지며 떠올라 사라짐)", done: true },
+      { id: "4-4", text: "아이템 프리팹 저장 후 타일 위에 3개 배치 (배치 B안)", done: true },
+      { id: "4-5", text: "<code>UIManager</code>: <code>ITEM 0 / 3</code> 표시 (왼쪽 위)", done: true },
+      { id: "4-6", text: "아이템 획득 및 UI 갱신 테스트 (자동 테스트 5개 통과 · 직접 플레이 확인 대기)", done: false },
     ]},
     { no: 5, title: "게임 종료 / 성공 판정 (GameManager)", items: [
       { id: "5-1", text: "<code>GameManager</code>: 상태 정의 (Playing / GameOver / Clear)", done: false },
@@ -323,6 +324,21 @@
       done: "PlayMode 자동 테스트 4개 통과, <b>체크는 하지 않음</b>",
       basis: "2-8에서 사용자가 정한 규칙: 자동 테스트만으로 체크하지 않고 직접 플레이 후 체크",
       reason: "같은 규칙 적용" },
+    { id: "4-5", title: "UI 글자", kinds: ["user"],
+      plan: "UI: <code>아이템 0 / 3</code> (한글)",
+      done: "<code>ITEM 0 / 3</code> (영어), 왼쪽 위",
+      basis: "TextMeshPro 기본 폰트(LiberationSans)에 한글 글자가 없어 네모로 깨짐. 무료 한글 폰트(Noto Sans KR) 다운로드는 사용자가 거절",
+      reason: "폰트를 추가하지 않고 어디서나 깨지지 않게 표시 → 사용자에게 대안을 묻고 영어로 결정" },
+    { id: "4-6", title: "획득 테스트", kinds: ["user"],
+      plan: "아이템 획득 및 UI 갱신 테스트",
+      done: "PlayMode 자동 테스트 5개 통과, <b>체크는 하지 않음</b>",
+      basis: "2-8에서 사용자가 정한 규칙",
+      reason: "같은 규칙 적용" },
+    { id: "4단계 준비", title: "TMP 리소스", kinds: ["self"],
+      plan: "(할일에 없음)",
+      done: "TextMeshPro 필수 리소스(<code>Assets/TextMesh Pro</code>, 81개 파일·3.84 MB)를 프로젝트에 가져옴",
+      basis: "UI 글자(TextMeshPro)를 쓰려면 기본 폰트·셰이더가 필요함. Unity에 들어 있는 패키지를 사용 (인터넷 다운로드 없음)",
+      reason: "4-5 UI 표시에 꼭 필요. 묻지 않고 진행함" },
     { id: "2단계", title: "조명", kinds: ["none"],
       plan: "조명: 카메라 쪽에서 비추기 (사용자 선택)",
       done: "조명을 바꾸지 않음",

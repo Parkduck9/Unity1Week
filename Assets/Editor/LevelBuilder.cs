@@ -1,11 +1,13 @@
 using System;
 using System.IO;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
-/// 4x4 타일맵을 만들고 플레이어와 카메라를 Main 씬에 배치한다.
+/// 4x4 타일맵을 만들고 플레이어, 카메라, 아이템, UI를 Main 씬에 배치한다.
 /// 메뉴: Tools > Voxel > Build Level
 /// </summary>
 public static class LevelBuilder
@@ -14,16 +16,17 @@ public static class LevelBuilder
     const string TilePrefabPath = "Assets/Prefabs/Tile.prefab";
     const string MaterialDir = "Assets/Materials/Level";
     const string LevelName = "Level";
+    const string UIName = "UI";
 
     const float TileSize = 1f;
     const float TileThickness = 0.5f;
 
-    // 맵 배치: # = 타일, . = 구멍, S = 시작 위치(타일 있음). 첫 줄이 맵 안쪽(+Z)
+    // 맵 배치: # = 타일, . = 구멍, S = 시작 위치, * = 아이템(타일 있음). 첫 줄이 맵 안쪽(+Z)
     static readonly string[] Layout =
     {
-        "####",
-        "#.##",
-        "##.#",
+        "###*",
+        "#.*#",
+        "#*.#",
         "S###",
     };
 
@@ -42,6 +45,7 @@ public static class LevelBuilder
         var light = CreateMaterial("Tile_Light", TileLightColor);
         var dark = CreateMaterial("Tile_Dark", TileDarkColor);
         var tilePrefab = CreateTilePrefab(light);
+        var itemPrefab = ItemBuilder.EnsurePrefab();
 
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
@@ -51,8 +55,11 @@ public static class LevelBuilder
         var level = new GameObject(LevelName);
         var tiles = new GameObject("Tiles").transform;
         tiles.SetParent(level.transform, false);
+        var items = new GameObject("Items").transform;
+        items.SetParent(level.transform, false);
 
         var startPosition = Vector3.zero;
+        var itemCount = 0;
         var rows = Layout.Length;
         for (var row = 0; row < rows; row++)
         {
@@ -71,8 +78,18 @@ public static class LevelBuilder
                 tile.transform.localPosition = position;
                 if ((x + z) % 2 == 1)
                     tile.GetComponentInChildren<MeshRenderer>().sharedMaterial = dark;
+
+                if (cell == '*')
+                {
+                    var item = (GameObject)PrefabUtility.InstantiatePrefab(itemPrefab, scene);
+                    item.name = $"Item_{++itemCount}";
+                    item.transform.SetParent(items, false);
+                    item.transform.localPosition = position + Vector3.up * ItemBuilder.FloatHeight;
+                }
             }
         }
+
+        BuildUI();
 
         // 플레이어: 시작 위치, 카메라 쪽(-Z)을 바라봄
         var playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(VoxelCharacterBuilder.PrefabPath);
@@ -93,6 +110,50 @@ public static class LevelBuilder
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
         Debug.Log($"[LevelBuilder] Built level in {ScenePath}");
+    }
+
+    /// <summary>화면 UI: 왼쪽 위에 ITEM 0 / 3 (사용자 결정: 영어 표시, 왼쪽 위)</summary>
+    static void BuildUI()
+    {
+        var old = GameObject.Find(UIName);
+        if (old != null) UnityEngine.Object.DestroyImmediate(old);
+
+        var ui = new GameObject(UIName, typeof(RectTransform));
+        var canvas = ui.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        var scaler = ui.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        scaler.matchWidthOrHeight = 0.5f;
+
+        // 글자가 배경색과 상관없이 잘 보이도록 반투명 어두운 판 위에 표시
+        var panel = new GameObject("ItemPanel", typeof(RectTransform), typeof(Image));
+        var panelRect = (RectTransform)panel.transform;
+        panelRect.SetParent(ui.transform, false);
+        panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = new Vector2(0f, 1f);
+        panelRect.anchoredPosition = new Vector2(32f, -28f);
+        panelRect.sizeDelta = new Vector2(330f, 84f);
+        panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.45f);
+
+        var textGo = new GameObject("ItemText", typeof(RectTransform));
+        var textRect = (RectTransform)textGo.transform;
+        textRect.SetParent(panelRect, false);
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(20f, 0f);
+        textRect.offsetMax = new Vector2(-20f, 0f);
+        var text = textGo.AddComponent<TextMeshProUGUI>();
+        text.text = "ITEM 0 / 3";
+        text.fontSize = 52f;
+        text.fontStyle = FontStyles.Bold;
+        text.color = Color.white;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+
+        var manager = ui.AddComponent<UIManager>();
+        var so = new SerializedObject(manager);
+        so.FindProperty("itemText").objectReferenceValue = text;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static Vector3 CellToWorld(int x, int z, int columns, int rows)
@@ -138,6 +199,10 @@ public static class LevelBuilder
         return mat;
     }
 
+    // UI 글자에는 TextMeshPro 필수 리소스(Assets/TextMesh Pro)가 필요하다. 없으면 메뉴
+    // Window > TextMeshPro > Import TMP Essential Resources 또는 명령줄 -importPackage 로 가져온다.
+    // (AssetDatabase.ImportPackage는 비동기라 batchmode -quit에서는 끝나기 전에 종료됨)
+
     // batchmode 실행용:
     // Unity.exe -batchmode -quit -executeMethod LevelBuilder.BuildAllFromCommandLine [-previewDir <폴더>]
     public static void BuildAllFromCommandLine()
@@ -145,6 +210,7 @@ public static class LevelBuilder
         try
         {
             AnimationBuilder.Build();
+            ItemBuilder.Build();
             VoxelCharacterBuilder.Build();
             AssetDatabase.SaveAssets();
             Build();
@@ -169,6 +235,12 @@ public static class LevelBuilder
                 Close("char-front.png", new Vector3(0.7f, 0.9f, -1.9f));
                 Close("char-back.png", new Vector3(-0.8f, 0.9f, 1.9f));
                 Close("char-side.png", new Vector3(2.1f, 0.6f, 0f));
+
+                // 금화 확대
+                var coin = GameObject.Find("Item_1").transform.position;
+                var coinCam = coin + new Vector3(0.25f, 0.2f, -0.9f);
+                PreviewCapture.Capture(Path.Combine(dir, "item-close.png"), coinCam,
+                    Quaternion.LookRotation(coin - coinCam), 35f, 480, 480);
 
                 // 애니메이션 자세
                 AnimationBuilder.CapturePoses(dir);
