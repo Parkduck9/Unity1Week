@@ -17,6 +17,7 @@ public static class LevelBuilder
     const string MaterialDir = "Assets/Materials/Level";
     const string LevelName = "Level";
     const string UIName = "UI";
+    const string GameManagerName = "GameManager";
 
     const float TileSize = 1f;
     const float TileThickness = 0.5f;
@@ -89,7 +90,7 @@ public static class LevelBuilder
             }
         }
 
-        BuildUI();
+        var uiManager = BuildUI();
 
         // 플레이어: 시작 위치, 카메라 쪽(-Z)을 바라봄
         var playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(VoxelCharacterBuilder.PrefabPath);
@@ -106,14 +107,27 @@ public static class LevelBuilder
         so.ApplyModifiedPropertiesWithoutUndo();
         follow.Snap();
 
+        // 게임 상태 관리
+        var oldManager = GameObject.Find(GameManagerName);
+        if (oldManager != null) UnityEngine.Object.DestroyImmediate(oldManager);
+        var gameManager = new GameObject(GameManagerName).AddComponent<GameManager>();
+        var gm = new SerializedObject(gameManager);
+        gm.FindProperty("player").objectReferenceValue = player.GetComponent<PlayerController>();
+        gm.FindProperty("ui").objectReferenceValue = uiManager;
+        gm.ApplyModifiedPropertiesWithoutUndo();
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
         Debug.Log($"[LevelBuilder] Built level in {ScenePath}");
     }
 
-    /// <summary>화면 UI: 왼쪽 위에 ITEM 0 / 3 (사용자 결정: 영어 표시, 왼쪽 위)</summary>
-    static void BuildUI()
+    /// <summary>
+    /// 화면 UI
+    /// - 왼쪽 위 ITEM 0 / 3 (4단계 사용자 결정: 영어 표시, 왼쪽 위)
+    /// - 결과 화면: 화면 전체를 반투명하게 어둡게 + 가운데 큰 글자 (5단계 사용자 결정)
+    /// </summary>
+    static UIManager BuildUI()
     {
         var old = GameObject.Find(UIName);
         if (old != null) UnityEngine.Object.DestroyImmediate(old);
@@ -150,10 +164,58 @@ public static class LevelBuilder
         text.alignment = TextAlignmentOptions.MidlineLeft;
         text.textWrappingMode = TextWrappingModes.NoWrap;
 
+        // 결과 화면 (처음에는 숨김)
+        var result = new GameObject("ResultPanel", typeof(RectTransform), typeof(Image));
+        var resultRect = (RectTransform)result.transform;
+        resultRect.SetParent(ui.transform, false);
+        resultRect.anchorMin = Vector2.zero;
+        resultRect.anchorMax = Vector2.one;
+        resultRect.offsetMin = resultRect.offsetMax = Vector2.zero;
+        result.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
+
+        var resultTextGo = new GameObject("ResultText", typeof(RectTransform));
+        var resultTextRect = (RectTransform)resultTextGo.transform;
+        resultTextRect.SetParent(resultRect, false);
+        resultTextRect.anchorMin = new Vector2(0f, 0.5f);
+        resultTextRect.anchorMax = new Vector2(1f, 0.5f);
+        resultTextRect.sizeDelta = new Vector2(0f, 240f);
+        resultTextRect.anchoredPosition = new Vector2(0f, 40f);
+        var resultText = resultTextGo.AddComponent<TextMeshProUGUI>();
+        resultText.text = "GAME OVER";
+        resultText.fontSize = 170f;
+        resultText.fontStyle = FontStyles.Bold;
+        resultText.alignment = TextAlignmentOptions.Center;
+        resultText.textWrappingMode = TextWrappingModes.NoWrap;
+        result.SetActive(false);
+
         var manager = ui.AddComponent<UIManager>();
         var so = new SerializedObject(manager);
         so.FindProperty("itemText").objectReferenceValue = text;
+        so.FindProperty("resultPanel").objectReferenceValue = result;
+        so.FindProperty("resultText").objectReferenceValue = resultText;
         so.ApplyModifiedPropertiesWithoutUndo();
+        return manager;
+    }
+
+    /// <summary>게임 카메라 시점에 UI를 함께 찍는다. 확인용이며 씬은 저장하지 않는다.</summary>
+    static void CaptureWithUI(string file, GameState? result)
+    {
+        var canvas = GameObject.Find(UIName).GetComponent<Canvas>();
+        var ui = canvas.GetComponent<UIManager>();
+        if (result.HasValue) ui.ShowResult(result.Value); else ui.HideResult();
+
+        var main = Camera.main.transform;
+        PreviewCapture.Capture(file, main.position, main.rotation, 60f, 960, 540, cam =>
+        {
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = cam;
+            canvas.planeDistance = 1f;
+            Canvas.ForceUpdateCanvases();
+        });
+
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        canvas.worldCamera = null;
+        ui.HideResult();
     }
 
     static Vector3 CellToWorld(int x, int z, int columns, int rows)
@@ -241,6 +303,11 @@ public static class LevelBuilder
                 var coinCam = coin + new Vector3(0.25f, 0.2f, -0.9f);
                 PreviewCapture.Capture(Path.Combine(dir, "item-close.png"), coinCam,
                     Quaternion.LookRotation(coin - coinCam), 35f, 480, 480);
+
+                // UI 포함 화면 (Overlay UI는 카메라에 찍히지 않으므로 잠시 카메라 모드로 바꿔 찍음)
+                CaptureWithUI(Path.Combine(dir, "ui-playing.png"), null);
+                CaptureWithUI(Path.Combine(dir, "ui-gameover.png"), GameState.GameOver);
+                CaptureWithUI(Path.Combine(dir, "ui-clear.png"), GameState.Clear);
 
                 // 애니메이션 자세
                 AnimationBuilder.CapturePoses(dir);

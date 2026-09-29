@@ -115,7 +115,7 @@
     <h2>게임 목표</h2>
     <div class="goal">
       <div class="card"><b>CLEAR</b>4x4 타일맵 위의 아이템 3개를 모두 모은다</div>
-      <div class="card bad"><b>GAME OVER</b>맵 밖으로 떨어진다 (<code>y &lt; -5</code>)</div>
+      <div class="card bad"><b>GAME OVER</b>맵 밖이나 구멍으로 떨어진다 (<code>y &lt; -5</code>)</div>
     </div>
   </section>
 
@@ -187,9 +187,11 @@
       <li class="card step"><div class="num">5</div><div>
         <h3>게임 종료 / 성공 판정 (GameManager)</h3>
         <ul>
-          <li>실패: 캐릭터 <code>y &lt; -5</code> → <code>GAME OVER</code> 문구 표시</li>
-          <li>성공: 아이템 3개 모두 획득 → <code>CLEAR</code> 문구 표시</li>
-          <li>종료되면 플레이어 입력 막기</li>
+          <li>실패: 캐릭터 <code>y &lt; -5</code> (맵 밖·구멍) → <code>GAME OVER</code> 문구 표시 (빨간색)</li>
+          <li>성공: 아이템 3개 모두 획득 → <code>CLEAR</code> 문구 표시 (금색)</li>
+          <li>결과 문구: 화면 가운데 크게, 화면 전체를 반투명하게 어둡게</li>
+          <li>종료되면 플레이어 입력 막기 (클리어 때는 그 자리에 멈춰 Idle)</li>
+          <li>떨어질 때 카메라는 맵 높이에서 멈춤 (캐릭터만 아래로 떨어짐)</li>
         </ul>
       </div></li>
       <li class="card step"><div class="num">6</div><div>
@@ -227,10 +229,10 @@
         <thead><tr><th>스크립트</th><th>역할</th></tr></thead>
         <tbody>
           <tr><td><code>PlayerController</code></td><td>이동, 점프, 애니메이션 파라미터 전달</td></tr>
-          <tr><td><code>FollowCamera</code></td><td>플레이어 따라가기</td></tr>
+          <tr><td><code>FollowCamera</code></td><td>플레이어 따라가기 (떨어질 때는 맵 높이에서 멈춤)</td></tr>
           <tr><td><code>Item</code></td><td>회전 연출, 획득 처리</td></tr>
-          <tr><td><code>GameManager</code></td><td>상태 관리, 승패 판정, 재시작</td></tr>
-          <tr><td><code>UIManager</code></td><td>아이템 개수, 결과 문구, 카운트다운 표시</td></tr>
+          <tr><td><code>GameManager</code></td><td>상태 관리, 승패 판정, 아이템 개수 세기, 재시작</td></tr>
+          <tr><td><code>UIManager</code></td><td>아이템 개수, 결과 문구, 카운트다운 표시 (표시만 담당)</td></tr>
         </tbody>
       </table>
     </div>
@@ -310,13 +312,27 @@
       </table>
     </div>
 
+    <h3 class="ver">v6 · 2026-09-29 · 5단계 착수</h3>
+    <p class="note">5단계를 시작하기 전에 정해지지 않은 부분을 물어보고 5단계 설명을 고쳤습니다. 미반영 차이였던 개요의 낙하 조건도 본문에 반영했습니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>항목</th><th>이전 (v5)</th><th>변경 (v6)</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td>개요 목표</td><td>맵 밖으로 떨어지면 게임 오버</td><td>맵 밖이나 <b>구멍</b>으로 떨어지면 게임 오버</td><td>v2에서 구멍 있는 맵을 선택함. 5단계에서 두 경우 모두 <code>y &lt; -5</code>로 판정</td></tr>
+          <tr><td>결과 문구</td><td>GAME OVER / CLEAR 문구 표시</td><td>가운데 크게 + 화면 어둡게, GAME OVER 빨간색 / CLEAR 금색</td><td>사용자 선택</td></tr>
+          <tr><td>클리어 때 캐릭터</td><td>입력 막기</td><td>입력 막기 + 그 자리에 멈춰 Idle</td><td>사용자 선택 (계획대로)</td></tr>
+          <tr><td>떨어질 때 카메라</td><td>설명 없음 (끝까지 따라감)</td><td>맵 높이에서 멈춤</td><td>끝까지 따라가면 맵이 화면 밖으로 사라짐. 사용자 선택</td></tr>
+          <tr><td>스크립트 역할</td><td>GameManager: 상태·승패·재시작 / UIManager: 표시</td><td>+ GameManager가 아이템 개수 세기, UIManager는 표시만</td><td>승패 판정에 개수가 필요해 4단계의 UIManager 개수 세기를 GameManager로 옮김</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <h3 class="ver">본문에 아직 반영하지 않은 차이</h3>
     <p class="note">실제 작업이 계획서 본문과 달라졌지만 본문은 아직 고치지 않은 부분입니다.</p>
     <div class="card scroll">
       <table>
         <thead><tr><th>위치</th><th>계획서 본문</th><th>실제</th><th>이유</th></tr></thead>
         <tbody>
-          <tr><td>개요</td><td>맵 밖으로 떨어지면 게임 오버</td><td>맵 밖 <b>또는 구멍</b>으로 떨어지면 게임 오버</td><td>v2에서 구멍 있는 맵을 선택했기 때문</td></tr>
           <tr><td>0단계</td><td>Unity 6 LTS, URP 템플릿</td><td>Unity <b>6000.3.25f1</b> (6.3 LTS), Universal 3D 템플릿, 씬 이름 <code>Main</code></td><td>설치된 두 버전 중 LTS 기준으로 선택. 이 템플릿에 URP와 Input System이 함께 들어 있음</td></tr>
           <tr><td>1단계</td><td>머리/몸/팔/다리 6개 파츠</td><td>+ 머리카락, 눈, 깃, 허리띠, 치마 3단, 소매, 프릴, 신발 (큐브 26개), <code>Model</code> 오브젝트. 치마는 몸통에 붙음</td><td>레퍼런스처럼 보이도록 디테일 추가. <code>Model</code>은 3단계 Animator 위치. 치마는 걸을 때 흔들리지 않게</td></tr>
           <tr><td>스크립트 구성</td><td>게임 스크립트 5개</td><td>+ 에디터 도구 <code>VoxelCharacterBuilder</code>, <code>LevelBuilder</code>, <code>PreviewCapture</code>, PlayMode 테스트</td><td>캐릭터·맵을 메뉴 한 번으로 다시 만들고, 동작을 자동 테스트로 확인하기 위함</td></tr>

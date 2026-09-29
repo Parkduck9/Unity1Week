@@ -10,6 +10,8 @@ public class FollowCamera : MonoBehaviour
     [Tooltip("대상 발 위치에서 이 높이만큼 위를 바라본다")]
     [SerializeField] float lookHeight = 0.5f;
     [SerializeField] float smoothTime = 0.15f;
+    [Tooltip("대상이 이 높이보다 아래로 떨어지면 카메라는 이 높이에서 멈춘다 (맵 높이)")]
+    [SerializeField] float minTargetHeight = 0f;
 
     Vector3 velocity;
 
@@ -26,7 +28,7 @@ public class FollowCamera : MonoBehaviour
     void LateUpdate()
     {
         if (target == null) return;
-        transform.position = Vector3.SmoothDamp(transform.position, target.position + offset, ref velocity, smoothTime);
+        transform.position = Vector3.SmoothDamp(transform.position, FollowPoint() + offset, ref velocity, smoothTime);
         transform.rotation = FixedRotation();
     }
 
@@ -34,9 +36,17 @@ public class FollowCamera : MonoBehaviour
     public void Snap()
     {
         if (target == null) return;
-        transform.position = target.position + offset;
+        transform.position = FollowPoint() + offset;
         transform.rotation = FixedRotation();
         velocity = Vector3.zero;
+    }
+
+    // 떨어질 때는 맵 높이에서 멈춤 (5단계 사용자 결정), 점프처럼 위로 올라갈 때는 따라감
+    Vector3 FollowPoint()
+    {
+        var p = target.position;
+        p.y = Mathf.Max(p.y, minTargetHeight);
+        return p;
     }
 
     Quaternion FixedRotation() => Quaternion.LookRotation(Vector3.up * lookHeight - offset, Vector3.up);
