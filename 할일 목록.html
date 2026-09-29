@@ -206,7 +206,7 @@
       { id: "2-5", text: "<code>PlayerController</code>: Space 점프 + 바닥 체크", done: true },
       { id: "2-6", text: "이동 방향으로 캐릭터 회전", done: true },
       { id: "2-7", text: "<code>FollowCamera</code>: 고정 각도 쿼터뷰로 부드럽게 따라가기", done: true },
-      { id: "2-8", text: "이동 / 점프 / 카메라 동작 테스트 (자동 테스트 8개 통과 · 7단계로 대체됨)", done: false },
+      { id: "2-8", text: "이동 / 점프 / 카메라 동작 테스트 (자동 테스트 8개 통과 · 7단계로 대체됨 → 직접 플레이로 확인 완료)", done: true },
     ]},
     { no: 3, title: "Idle / Walk / Jump 애니메이션", items: [
       { id: "3-1", text: "Idle 애니메이션 제작 (숨쉬기 + 머리 살짝 기울이기)", done: true },
@@ -214,7 +214,7 @@
       { id: "3-3", text: "Jump 애니메이션 제작 (팔 올리기 + 몸 늘이기)", done: true },
       { id: "3-4", text: "Animator Controller 구성: Idle ↔ Walk, Any State → Jump (공중에 있을 때)", done: true },
       { id: "3-5", text: "<code>PlayerController</code>에서 애니메이션 파라미터 전달 (Speed, Grounded)", done: true },
-      { id: "3-6", text: "애니메이션 전환 테스트 (자동 테스트 4개 통과 · 7단계로 대체됨)", done: false },
+      { id: "3-6", text: "애니메이션 전환 테스트 (자동 테스트 4개 통과 · 7단계로 대체됨 → 직접 플레이로 확인 완료)", done: true },
     ]},
     { no: 4, title: "아이템 추가", items: [
       { id: "4-1", text: "아이템 모델 / 머티리얼 제작 (금화(엽전) 복셀 모델)", done: true },
@@ -222,7 +222,7 @@
       { id: "4-3", text: "<code>Item</code>: Trigger Collider로 획득 처리 (작아지며 떠올라 사라짐)", done: true },
       { id: "4-4", text: "아이템 프리팹 저장 후 타일 위에 3개 배치 (배치 B안)", done: true },
       { id: "4-5", text: "<code>UIManager</code>: <code>ITEM 0 / 3</code> 표시 (왼쪽 위)", done: true },
-      { id: "4-6", text: "아이템 획득 및 UI 갱신 테스트 (자동 테스트 5개 통과 · 7단계로 대체됨)", done: false },
+      { id: "4-6", text: "아이템 획득 및 UI 갱신 테스트 (자동 테스트 5개 통과 · 7단계로 대체됨 → 직접 플레이로 확인 완료)", done: true },
     ]},
     { no: 5, title: "게임 종료 / 성공 판정 (GameManager)", items: [
       { id: "5-1", text: "<code>GameManager</code>: 상태 정의 (Playing / GameOver / Clear)", done: true },
@@ -231,15 +231,15 @@
       { id: "5-4", text: "<code>GAME OVER</code> 문구 UI (가운데 크게, 빨간색, 화면 어둡게)", done: true },
       { id: "5-5", text: "<code>CLEAR</code> 문구 UI (가운데 크게, 금색, 화면 어둡게)", done: true },
       { id: "5-6", text: "게임 종료 시 플레이어 입력 막기 (클리어 때는 그 자리에 멈춰 Idle)", done: true },
-      { id: "5-7", text: "실패 / 성공 테스트 (자동 테스트 5개 통과 · 7단계로 대체됨)", done: false },
+      { id: "5-7", text: "실패 / 성공 테스트 (자동 테스트 5개 통과 · 7단계로 대체됨 → 직접 플레이로 확인 완료)", done: true },
     ]},
     { no: 6, title: "3초 후 재시작", items: [
       { id: "6-1", text: "카운트다운 UI (3 → 2 → 1, 결과 문구 아래 숫자, 커졌다 작아짐)", done: true },
       { id: "6-2", text: "코루틴으로 3초 기다리기 (게임이 끝나자마자 시작)", done: true },
       { id: "6-3", text: "<code>SceneManager.LoadScene</code>으로 현재 씬 다시 불러오기", done: true },
-      { id: "6-4", text: "재시작 후 상태 / 아이템 / UI 초기화 확인 (자동 테스트 3개 통과 · 7단계로 대체됨)", done: false },
+      { id: "6-4", text: "재시작 후 상태 / 아이템 / UI 초기화 확인 (자동 테스트 3개 통과 · 7단계로 대체됨 → 직접 플레이로 확인 완료)", done: true },
     ]},
-    { no: 7, title: "시스템 변경: 점수 + 움직이는 구멍 (구현 완료)", items: [
+    { no: 7, title: "시스템 변경: 점수 + 움직이는 구멍", items: [
       { id: "7-1", text: "구멍 메우기: 16칸 모두 배치, 고정 금화 3개·ITEM UI·CLEAR 판정 제거", done: true },
       { id: "7-2", text: "<code>Tile</code>: 흔들림(1초) → 떨어짐 → 없음 → 아래에서 올라와 다시 생김(0.3초)", done: true },
       { id: "7-3", text: "<code>HoleManager</code>: 주기 3초 → 1초, 최대 구멍 수 1 → 14 (1분에 걸쳐), 캐릭터 발밑 포함", done: true },
@@ -250,26 +250,26 @@
       { id: "7-7", text: "점수: 코인 1개 = 100점, 왼쪽 위 <code>SCORE</code> 표시", done: true },
       { id: "7-8", text: "최고 점수: PlayerPrefs 저장, 오른쪽 위 <code>BEST</code> 표시", done: true },
       { id: "7-9", text: "자동 테스트 새로 작성 (기존 아이템·CLEAR 테스트 교체, 전체 35개 통과)", done: true },
-      { id: "7-10", text: "직접 플레이 확인 (사용자가 직접 플레이로 확인 대기)", done: false },
+      { id: "7-10", text: "직접 플레이 확인 (사용자 확인 완료)", done: true },
     ]},
     { no: 8, title: "디테일 캐릭터 (사용자 요청)", items: [
       { id: "8-1", text: "ChatGPT(Codex) 그림을 참고해 디테일 캐릭터 설계 (1차 → 2차 → 3차)", done: true },
       { id: "8-2", text: "3D 미리보기 페이지 <code>캐릭터 미리보기 (디테일).html</code>", done: true },
       { id: "8-3", text: "게임 캐릭터를 3차 디테일 캐릭터로 교체 (복셀 11,090개), 카메라 25% 가까이", done: true },
       { id: "8-4", text: "자동 테스트 35개 통과", done: true },
-      { id: "8-5", text: "직접 플레이 확인 (사용자 확인 대기)", done: false },
+      { id: "8-5", text: "직접 플레이 확인 (사용자 확인 완료)", done: true },
     ]},
-    { no: 9, title: "UI: 메인 메뉴 + 게임 오버 버튼 (구현 완료)", items: [
+    { no: 9, title: "UI: 메인 메뉴 + 게임 오버 버튼", items: [
       { id: "9-1", text: "UI 목업 <code>UI 미리보기.html</code>", done: true },
       { id: "9-2", text: "사용자 결정: 게임 오버 A(버튼만), 제목 JumpGirl, 마우스 + 키보드, NEW BEST!", done: true },
       { id: "9-3", text: "메인 메뉴: 제목, START, QUIT, 조작법, BEST (START 전에는 모두 멈춤)", done: true },
       { id: "9-4", text: "게임 오버: 점수·최고 점수·NEW BEST!, RETRY / MAIN MENU / QUIT", done: true },
       { id: "9-5", text: "자동 테스트 (전체 41개 통과)", done: true },
-      { id: "9-6", text: "직접 플레이 확인 (사용자 확인 대기)", done: false },
+      { id: "9-6", text: "직접 플레이 확인 (사용자 확인 완료)", done: true },
     ]},
     { no: "✓", title: "최종 확인", items: [
-      { id: "f-1", text: "처음부터 클리어까지 플레이 테스트", done: false },
-      { id: "f-2", text: "처음부터 게임 오버까지 플레이 테스트", done: false },
+      { id: "f-1", text: "처음부터 클리어까지 플레이 테스트 → 해당 없음 (7단계에서 CLEAR가 없어짐)", done: true },
+      { id: "f-2", text: "처음부터 게임 오버까지 플레이 테스트 (사용자 확인 완료)", done: true },
       { id: "f-3", text: "콘솔 에러 / 경고 없음 확인", done: false },
     ]},
   ];
