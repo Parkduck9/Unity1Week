@@ -6,7 +6,7 @@ using UnityEngine;
 public class FollowCamera : MonoBehaviour
 {
     [SerializeField] Transform target;
-    [SerializeField] Vector3 offset = new Vector3(0f, 5f, -4.5f);
+    [SerializeField] Vector3 offset = new Vector3(0f, 3.75f, -3.375f); // 디테일 캐릭터 적용 때 25% 가까이 (이전 0, 5, -4.5)
     [Tooltip("대상 발 위치에서 이 높이만큼 위를 바라본다")]
     [SerializeField] float lookHeight = 0.5f;
     [SerializeField] float smoothTime = 0.15f;

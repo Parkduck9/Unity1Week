@@ -24,6 +24,8 @@ public static class LevelBuilder
 
     const float TileSize = 1f;
     const float TileThickness = 0.5f;
+    // 따라가는 카메라 위치: 디테일 캐릭터 적용 때 25% 가까이 (사용자 결정, 이전 0, 5, -4.5)
+    static readonly Vector3 CameraOffset = new Vector3(0f, 3.75f, -3.375f);
 
     // 맵 배치: # = 타일, . = 구멍, S = 시작 위치(타일 있음). 첫 줄이 맵 안쪽(+Z)
     // 7단계: 처음에는 16칸 모두 막음 (구멍은 HoleManager가 게임 중에 만든다)
@@ -103,6 +105,7 @@ public static class LevelBuilder
         if (follow == null) follow = cam.gameObject.AddComponent<FollowCamera>();
         var so = new SerializedObject(follow);
         so.FindProperty("target").objectReferenceValue = player.transform;
+        so.FindProperty("offset").vector3Value = CameraOffset;
         so.ApplyModifiedPropertiesWithoutUndo();
         follow.Snap();
 

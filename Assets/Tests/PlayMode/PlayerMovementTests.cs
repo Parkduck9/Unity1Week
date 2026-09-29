@@ -11,7 +11,7 @@ using UnityEngine.TestTools;
 public class PlayerMovementTests : PlayModeTestBase
 {
     static readonly Vector3 StartPosition = new Vector3(-1.5f, 0f, -1.5f);
-    static readonly Vector3 CameraOffset = new Vector3(0f, 5f, -4.5f);
+    static readonly Vector3 CameraOffset = new Vector3(0f, 3.75f, -3.375f); // 25% 가까이 (디테일 캐릭터 적용 때)
 
     [UnityTest]
     public IEnumerator StartsOnStartTile_FacingCamera()

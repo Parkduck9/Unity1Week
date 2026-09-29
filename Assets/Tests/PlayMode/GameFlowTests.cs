@@ -79,7 +79,7 @@ public class GameFlowTests : PlayModeTestBase
         Assert.IsTrue(resultPanel.activeSelf, "y < -5로 떨어지면 결과 화면이 나와야 합니다.");
         Assert.AreEqual("GAME OVER", resultText.text);
         Assert.Less(player.transform.position.y, -4.9f, "GAME OVER는 y < -5에서 판정해야 합니다.");
-        Assert.Greater(cameraMinY, 4.8f, "떨어질 때 카메라는 맵 높이(y 0 + 5)에서 멈춰야 합니다.");
+        Assert.Greater(cameraMinY, 3.6f, "떨어질 때 카메라는 맵 높이(y 0 + 3.75)에서 멈춰야 합니다.");
     }
 
     [UnityTest]
