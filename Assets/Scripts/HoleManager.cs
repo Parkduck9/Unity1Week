@@ -29,7 +29,6 @@ public class HoleManager : MonoBehaviour
     Tile[] tiles;
     Vector3 origin; // 칸 (0,0)의 월드 위치
     float timer;
-    bool running = true;
 
     /// <summary>게임 시작 후 지난 시간. (테스트에서 난이도를 바꿀 때도 사용)</summary>
     public float Elapsed { get; set; }
@@ -51,21 +50,13 @@ public class HoleManager : MonoBehaviour
         }
     }
 
-    void OnEnable()
-    {
-        Tile.Fell += OnTileFell;
-        if (gameManager != null) gameManager.GameEnded += OnGameEnded;
-    }
-
-    void OnDisable()
-    {
-        Tile.Fell -= OnTileFell;
-        if (gameManager != null) gameManager.GameEnded -= OnGameEnded;
-    }
+    void OnEnable() => Tile.Fell += OnTileFell;
+    void OnDisable() => Tile.Fell -= OnTileFell;
 
     void Update()
     {
-        if (!running) return;
+        // 게임이 진행 중일 때만 (메인 메뉴·게임 오버에서는 멈춤)
+        if (gameManager != null && gameManager.State != GameState.Playing) return;
         Elapsed += Time.deltaTime;
         timer += Time.deltaTime;
         if (timer >= CurrentInterval)
@@ -75,7 +66,6 @@ public class HoleManager : MonoBehaviour
         }
     }
 
-    void OnGameEnded(GameState result) => running = false;
 
     public Tile GetTile(Vector2Int cell) => grid.TryGetValue(cell, out var tile) ? tile : null;
 

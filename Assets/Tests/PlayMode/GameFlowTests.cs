@@ -122,6 +122,7 @@ public class GameFlowTests : PlayModeTestBase
         SceneManager.LoadScene("Main");
         yield return null;
         FindSceneObjects();
+        gameManager.StartGame();
         StopSystems();
         FindResultPanel();
         yield return new WaitForSeconds(0.3f);
@@ -131,5 +132,20 @@ public class GameFlowTests : PlayModeTestBase
         yield return FallOffEdge();
         Assert.AreEqual(500, PlayerPrefs.GetInt(BestScoreKey, 0), "더 낮은 점수로 최고 점수가 바뀌면 안 됩니다.");
         Assert.AreEqual("BEST 500", BestText.text);
+        Assert.IsFalse(resultPanel.transform.Find("NewBestBadge").gameObject.activeSelf, "기록을 넘지 못하면 NEW BEST!가 없어야 합니다.");
+        Assert.AreEqual("100", resultPanel.transform.Find("ResultScore").GetComponent<TMP_Text>().text);
+        Assert.AreEqual("500", resultPanel.transform.Find("ResultBest").GetComponent<TMP_Text>().text);
+    }
+
+    [UnityTest]
+    public IEnumerator GameOver_ShowsScoreBest_AndNewBest()
+    {
+        yield return CollectOneCoin();
+        yield return FallOffEdge();
+        Assert.AreEqual("100", resultPanel.transform.Find("ResultScore").GetComponent<TMP_Text>().text, "게임 오버 화면에 이번 점수가 보여야 합니다.");
+        Assert.AreEqual("100", resultPanel.transform.Find("ResultBest").GetComponent<TMP_Text>().text, "게임 오버 화면에 최고 점수가 보여야 합니다.");
+        Assert.IsTrue(resultPanel.transform.Find("NewBestBadge").gameObject.activeSelf, "기록을 넘으면 NEW BEST!가 보여야 합니다.");
+        foreach (var name in new[] { "RetryButton", "MainMenuButton", "QuitButton" })
+            Assert.IsNotNull(resultPanel.transform.Find(name), $"{name} 버튼이 있어야 합니다.");
     }
 }

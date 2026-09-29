@@ -18,28 +18,19 @@ public class CoinSpawner : MonoBehaviour
 
     readonly Dictionary<Tile, Item> coins = new Dictionary<Tile, Item>();
     float timer;
-    bool running = true;
 
     public int ActiveCoinCount
     {
         get { CleanUp(); return coins.Count; }
     }
 
-    void OnEnable()
-    {
-        Tile.Fell += OnTileFell;
-        if (gameManager != null) gameManager.GameEnded += OnGameEnded;
-    }
-
-    void OnDisable()
-    {
-        Tile.Fell -= OnTileFell;
-        if (gameManager != null) gameManager.GameEnded -= OnGameEnded;
-    }
+    void OnEnable() => Tile.Fell += OnTileFell;
+    void OnDisable() => Tile.Fell -= OnTileFell;
 
     void Update()
     {
-        if (!running) return;
+        // 게임이 진행 중일 때만 (메인 메뉴·게임 오버에서는 멈춤)
+        if (gameManager != null && gameManager.State != GameState.Playing) return;
         timer += Time.deltaTime;
         if (timer >= interval)
         {
@@ -47,8 +38,6 @@ public class CoinSpawner : MonoBehaviour
             TrySpawn();
         }
     }
-
-    void OnGameEnded(GameState result) => running = false;
 
     /// <summary>규칙에 맞는 칸 중 무작위로 하나에 코인을 만든다. 칸이 없으면 null.</summary>
     public Item TrySpawn()

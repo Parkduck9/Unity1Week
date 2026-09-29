@@ -6,6 +6,7 @@
         "UnityEditor.TestRunner",
         "Unity.InputSystem",
         "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "Game"
     ],
     "includePlatforms": [],

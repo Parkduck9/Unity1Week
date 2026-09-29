@@ -4,6 +4,8 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 /// <summary>
@@ -117,6 +119,9 @@ public static class LevelBuilder
         gm.FindProperty("player").objectReferenceValue = player.GetComponent<PlayerController>();
         gm.FindProperty("ui").objectReferenceValue = uiManager;
         gm.ApplyModifiedPropertiesWithoutUndo();
+        var uiSo = new SerializedObject(uiManager); // 버튼이 부를 GameManager
+        uiSo.FindProperty("gameManager").objectReferenceValue = gameManager;
+        uiSo.ApplyModifiedPropertiesWithoutUndo();
 
         // 움직이는 구멍
         var oldHoles = GameObject.Find(HoleManagerName);
@@ -147,14 +152,21 @@ public static class LevelBuilder
     }
 
     /// <summary>
-    /// 화면 UI
-    /// - 왼쪽 위 SCORE, 오른쪽 위 BEST (7단계 사용자 결정, 한글 폰트가 없어 영어)
-    /// - 결과 화면: 화면 전체를 반투명하게 어둡게 + 가운데 큰 글자 (5단계 사용자 결정)
+    /// 화면 UI (UI 글자는 기본 폰트에 한글이 없어 영어)
+    /// - 플레이 중: 왼쪽 위 SCORE, 오른쪽 위 BEST
+    /// - 메인 메뉴: 제목 JumpGirl, START, QUIT, 조작법 (사용자 결정)
+    /// - 게임 오버: GAME OVER, 점수·최고 점수, NEW BEST!, RETRY / MAIN MENU / QUIT — 자동 재시작 없음 (사용자 결정 A)
+    /// - 키보드: EventSystem + InputSystemUIInputModule (방향키·WASD로 고르고 Enter로 누름)
     /// </summary>
     static UIManager BuildUI()
     {
         var old = GameObject.Find(UIName);
         if (old != null) UnityEngine.Object.DestroyImmediate(old);
+        var oldEvents = GameObject.Find("EventSystem");
+        if (oldEvents != null) UnityEngine.Object.DestroyImmediate(oldEvents);
+
+        var events = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
+        events.GetComponent<EventSystem>().sendNavigationEvents = true;
 
         var ui = new GameObject(UIName, typeof(RectTransform));
         var canvas = ui.AddComponent<Canvas>();
@@ -163,60 +175,143 @@ public static class LevelBuilder
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
+        ui.AddComponent<GraphicRaycaster>(); // 마우스 클릭
 
+        // --- 플레이 중 ---
         var scoreText = CreateCornerLabel(ui.transform, "Score", "SCORE 0", left: true);
         var bestText = CreateCornerLabel(ui.transform, "Best", "BEST 0", left: false);
 
-        // 결과 화면 (처음에는 숨김)
-        var result = new GameObject("ResultPanel", typeof(RectTransform), typeof(Image));
-        var resultRect = (RectTransform)result.transform;
-        resultRect.SetParent(ui.transform, false);
-        resultRect.anchorMin = Vector2.zero;
-        resultRect.anchorMax = Vector2.one;
-        resultRect.offsetMin = resultRect.offsetMax = Vector2.zero;
-        result.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
+        // --- 메인 메뉴 ---
+        var menu = CreatePanel(ui.transform, "MainMenuPanel", new Color(0.04f, 0.08f, 0.16f, 0.35f));
+        CreateText(menu, "TitleShadow", "JumpGirl", 190f, new Color(0.54f, 0.23f, 0.11f), new Vector2(0f, 206f), new Vector2(1400f, 240f));
+        CreateText(menu, "Title", "JumpGirl", 190f, new Color(1f, 0.88f, 0.54f), new Vector2(0f, 220f), new Vector2(1400f, 240f));
+        var startButton = CreateButton(menu, "StartButton", "START", new Color(0.91f, 0.29f, 0.36f), new Vector2(0f, -10f), new Vector2(420f, 110f));
+        var menuQuitButton = CreateButton(menu, "QuitButton", "QUIT", new Color(0.45f, 0.49f, 0.56f), new Vector2(0f, -140f), new Vector2(420f, 110f));
+        var hint = CreateText(menu, "Hint", "WASD / ARROWS : MOVE   ·   SPACE : JUMP", 32f, new Color(1f, 1f, 1f, 0.85f), new Vector2(0f, 0f), new Vector2(1400f, 60f));
+        var hintRect = (RectTransform)hint.transform;
+        hintRect.anchorMin = hintRect.anchorMax = new Vector2(0.5f, 0f);
+        hintRect.anchoredPosition = new Vector2(0f, 60f);
+        LinkVertical(startButton, menuQuitButton);
 
-        var resultTextGo = new GameObject("ResultText", typeof(RectTransform));
-        var resultTextRect = (RectTransform)resultTextGo.transform;
-        resultTextRect.SetParent(resultRect, false);
-        resultTextRect.anchorMin = new Vector2(0f, 0.5f);
-        resultTextRect.anchorMax = new Vector2(1f, 0.5f);
-        resultTextRect.sizeDelta = new Vector2(0f, 240f);
-        resultTextRect.anchoredPosition = new Vector2(0f, 40f);
-        var resultText = resultTextGo.AddComponent<TextMeshProUGUI>();
-        resultText.text = "GAME OVER";
-        resultText.fontSize = 170f;
-        resultText.fontStyle = FontStyles.Bold;
-        resultText.alignment = TextAlignmentOptions.Center;
-        resultText.textWrappingMode = TextWrappingModes.NoWrap;
-
-        // 재시작 카운트다운: 결과 문구 아래 숫자 (6단계 사용자 결정)
-        var countdownGo = new GameObject("CountdownText", typeof(RectTransform));
-        var countdownRect = (RectTransform)countdownGo.transform;
-        countdownRect.SetParent(resultRect, false);
-        countdownRect.anchorMin = new Vector2(0.5f, 0.5f);
-        countdownRect.anchorMax = new Vector2(0.5f, 0.5f);
-        countdownRect.sizeDelta = new Vector2(300f, 200f);
-        countdownRect.anchoredPosition = new Vector2(0f, -150f);
-        var countdownText = countdownGo.AddComponent<TextMeshProUGUI>();
-        countdownText.text = "3";
-        countdownText.fontSize = 140f;
-        countdownText.fontStyle = FontStyles.Bold;
-        countdownText.color = Color.white;
-        countdownText.alignment = TextAlignmentOptions.Center;
-        countdownText.textWrappingMode = TextWrappingModes.NoWrap;
-        countdownGo.SetActive(false);
-        result.SetActive(false);
+        // --- 게임 오버 (처음에는 숨김) ---
+        var result = CreatePanel(ui.transform, "ResultPanel", new Color(0f, 0f, 0f, 0.55f));
+        var resultText = CreateText(result, "ResultText", "GAME OVER", 170f, new Color(1f, 0.32f, 0.32f), new Vector2(0f, 190f), new Vector2(1600f, 220f));
+        CreateText(result, "ScoreLabel", "SCORE", 30f, new Color(1f, 1f, 1f, 0.75f), new Vector2(-150f, 60f), new Vector2(260f, 44f));
+        var resultScore = CreateText(result, "ResultScore", "0", 64f, Color.white, new Vector2(-150f, 10f), new Vector2(260f, 80f));
+        CreateText(result, "BestLabel", "BEST", 30f, new Color(1f, 1f, 1f, 0.75f), new Vector2(150f, 60f), new Vector2(260f, 44f));
+        var resultBest = CreateText(result, "ResultBest", "0", 64f, Color.white, new Vector2(150f, 10f), new Vector2(260f, 80f));
+        var badge = CreatePanel(result, "NewBestBadge", new Color(1f, 0.81f, 0.25f));
+        var badgeRect = (RectTransform)badge;
+        badgeRect.anchorMin = badgeRect.anchorMax = new Vector2(0.5f, 0.5f);
+        badgeRect.sizeDelta = new Vector2(260f, 64f);
+        badgeRect.anchoredPosition = new Vector2(400f, 40f);
+        badgeRect.localRotation = Quaternion.Euler(0f, 0f, -6f);
+        CreateText(badge, "Label", "NEW BEST!", 38f, new Color(0.36f, 0.23f, 0f), Vector2.zero, new Vector2(260f, 64f));
+        var retryButton = CreateButton(result, "RetryButton", "RETRY", new Color(0.91f, 0.29f, 0.36f), new Vector2(-380f, -150f), new Vector2(340f, 100f));
+        var mainMenuButton = CreateButton(result, "MainMenuButton", "MAIN MENU", new Color(0.25f, 0.44f, 0.85f), new Vector2(0f, -150f), new Vector2(340f, 100f));
+        var quitButton = CreateButton(result, "QuitButton", "QUIT", new Color(0.45f, 0.49f, 0.56f), new Vector2(380f, -150f), new Vector2(340f, 100f));
+        LinkHorizontal(retryButton, mainMenuButton, quitButton);
+        badge.gameObject.SetActive(false);
+        result.gameObject.SetActive(false);
 
         var manager = ui.AddComponent<UIManager>();
         var so = new SerializedObject(manager);
+        so.FindProperty("scorePanel").objectReferenceValue = scoreText.transform.parent.gameObject;
         so.FindProperty("scoreText").objectReferenceValue = scoreText;
         so.FindProperty("bestText").objectReferenceValue = bestText;
-        so.FindProperty("resultPanel").objectReferenceValue = result;
+        so.FindProperty("mainMenuPanel").objectReferenceValue = menu.gameObject;
+        so.FindProperty("startButton").objectReferenceValue = startButton;
+        so.FindProperty("menuQuitButton").objectReferenceValue = menuQuitButton;
+        so.FindProperty("resultPanel").objectReferenceValue = result.gameObject;
         so.FindProperty("resultText").objectReferenceValue = resultText;
-        so.FindProperty("countdownText").objectReferenceValue = countdownText;
+        so.FindProperty("resultScoreText").objectReferenceValue = resultScore;
+        so.FindProperty("resultBestText").objectReferenceValue = resultBest;
+        so.FindProperty("newBestBadge").objectReferenceValue = badge.gameObject;
+        so.FindProperty("retryButton").objectReferenceValue = retryButton;
+        so.FindProperty("mainMenuButton").objectReferenceValue = mainMenuButton;
+        so.FindProperty("quitButton").objectReferenceValue = quitButton;
         so.ApplyModifiedPropertiesWithoutUndo();
         return manager;
+    }
+
+    /// <summary>화면 전체를 덮는 반투명 판</summary>
+    static RectTransform CreatePanel(Transform parent, string name, Color color)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+        var rect = (RectTransform)go.transform;
+        rect.SetParent(parent, false);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = rect.offsetMax = Vector2.zero;
+        go.GetComponent<Image>().color = color;
+        return rect;
+    }
+
+    /// <summary>가운데 기준 글자</summary>
+    static TMP_Text CreateText(Transform parent, string name, string value, float size, Color color, Vector2 position, Vector2 box)
+    {
+        var go = new GameObject(name, typeof(RectTransform));
+        var rect = (RectTransform)go.transform;
+        rect.SetParent(parent, false);
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = box;
+        rect.anchoredPosition = position;
+        var text = go.AddComponent<TextMeshProUGUI>();
+        text.text = value;
+        text.fontSize = size;
+        text.fontStyle = FontStyles.Bold;
+        text.color = color;
+        text.alignment = TextAlignmentOptions.Center;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+        return text;
+    }
+
+    /// <summary>색 판 + 글자 버튼. 키보드로 골랐을 때는 밝아지고 흰 테두리가 보임</summary>
+    static Button CreateButton(Transform parent, string name, string label, Color color, Vector2 position, Vector2 size)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
+        var rect = (RectTransform)go.transform;
+        rect.SetParent(parent, false);
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = size;
+        rect.anchoredPosition = position;
+        go.GetComponent<Image>().color = Color.white;
+        var button = go.GetComponent<Button>();
+        var colors = button.colors;
+        colors.normalColor = color;
+        colors.highlightedColor = Color.Lerp(color, Color.white, 0.25f);
+        colors.selectedColor = Color.Lerp(color, Color.white, 0.3f);
+        colors.pressedColor = Color.Lerp(color, Color.black, 0.2f);
+        colors.fadeDuration = 0.08f;
+        button.colors = colors;
+        var outline = go.GetComponent<Outline>();
+        outline.effectColor = new Color(0f, 0f, 0f, 0.35f);
+        outline.effectDistance = new Vector2(0f, -8f); // 아래쪽 두께감
+        CreateText(rect, "Label", label, size.y * 0.42f, Color.white, Vector2.zero, size);
+        return button;
+    }
+
+    static void LinkVertical(params Button[] buttons)
+    {
+        for (var i = 0; i < buttons.Length; i++)
+        {
+            var nav = new Navigation { mode = Navigation.Mode.Explicit };
+            nav.selectOnUp = buttons[(i - 1 + buttons.Length) % buttons.Length];
+            nav.selectOnDown = buttons[(i + 1) % buttons.Length];
+            buttons[i].navigation = nav;
+        }
+    }
+
+    static void LinkHorizontal(params Button[] buttons)
+    {
+        for (var i = 0; i < buttons.Length; i++)
+        {
+            var nav = new Navigation { mode = Navigation.Mode.Explicit };
+            nav.selectOnLeft = buttons[(i - 1 + buttons.Length) % buttons.Length];
+            nav.selectOnRight = buttons[(i + 1) % buttons.Length];
+            buttons[i].navigation = nav;
+        }
     }
 
     /// <summary>화면 위쪽 모서리에 반투명 어두운 판 + 글자를 만든다 (글자가 배경과 상관없이 잘 보이게)</summary>
@@ -230,6 +325,7 @@ public static class LevelBuilder
         panelRect.anchoredPosition = new Vector2(left ? 32f : -32f, -28f);
         panelRect.sizeDelta = new Vector2(380f, 84f);
         panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.45f);
+        panel.GetComponent<Image>().raycastTarget = false;
 
         var textGo = new GameObject($"{name}Text", typeof(RectTransform));
         var textRect = (RectTransform)textGo.transform;
@@ -245,20 +341,21 @@ public static class LevelBuilder
         text.color = Color.white;
         text.alignment = left ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.MidlineRight;
         text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
         return text;
     }
 
+    enum UiShot { Menu, Playing, GameOver }
+
     /// <summary>게임 카메라 시점에 UI를 함께 찍는다. 확인용이며 씬은 저장하지 않는다.</summary>
-    static void CaptureWithUI(string file, GameState? result)
+    static void CaptureWithUI(string file, UiShot shot)
     {
         var canvas = GameObject.Find(UIName).GetComponent<Canvas>();
         var ui = canvas.GetComponent<UIManager>();
-        if (result.HasValue)
-        {
-            ui.ShowResult(result.Value);
-            ui.ShowCountdown(3); // 결과가 나온 직후 모습
-        }
-        else ui.HideResult();
+        ui.HideResult();
+        ui.HideMainMenu();
+        if (shot == UiShot.Menu) ui.ShowMainMenu();
+        if (shot == UiShot.GameOver) ui.ShowResult(1600, 1600, true);
 
         var main = Camera.main.transform;
         PreviewCapture.Capture(file, main.position, main.rotation, 60f, 960, 540, cam =>
@@ -272,6 +369,7 @@ public static class LevelBuilder
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.worldCamera = null;
         ui.HideResult();
+        ui.ShowMainMenu(); // 씬 기본 모습은 메인 메뉴
     }
 
     /// <summary>코인을 잠시 만들어 확대해서 찍는다. 확인용이며 씬에는 남기지 않는다.</summary>
@@ -382,8 +480,9 @@ public static class LevelBuilder
                 CaptureCoin(Path.Combine(dir, "coin-expired.png"), expired: true);
 
                 // UI 포함 화면 (Overlay UI는 카메라에 찍히지 않으므로 잠시 카메라 모드로 바꿔 찍음)
-                CaptureWithUI(Path.Combine(dir, "ui-playing.png"), null);
-                CaptureWithUI(Path.Combine(dir, "ui-gameover.png"), GameState.GameOver);
+                CaptureWithUI(Path.Combine(dir, "ui-menu.png"), UiShot.Menu);
+                CaptureWithUI(Path.Combine(dir, "ui-playing.png"), UiShot.Playing);
+                CaptureWithUI(Path.Combine(dir, "ui-gameover.png"), UiShot.GameOver);
 
                 // 애니메이션 자세
                 AnimationBuilder.CapturePoses(dir);

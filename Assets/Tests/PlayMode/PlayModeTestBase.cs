@@ -26,6 +26,9 @@ public abstract class PlayModeTestBase
     /// <summary>true면 구멍·코인이 게임처럼 자동으로 생긴다</summary>
     protected virtual bool AutoSystems => false;
 
+    /// <summary>true면 씬을 불러온 뒤 메인 메뉴의 START를 누른 것처럼 바로 시작한다</summary>
+    protected virtual bool AutoStart => true;
+
     InputSettings.BackgroundBehavior oldBackground;
     InputSettings.EditorInputBehaviorInPlayMode oldEditorInput;
     bool hadBest;
@@ -46,9 +49,11 @@ public abstract class PlayModeTestBase
         PlayerPrefs.DeleteKey(BestScoreKey);
 
         keyboard = InputSystem.AddDevice<Keyboard>();
+        GameManager.SkipMenuOnce = false;
         SceneManager.LoadScene("Main");
         yield return null;
         FindSceneObjects();
+        if (AutoStart) gameManager.StartGame();
         if (!AutoSystems) StopSystems();
         yield return null;
         yield return new WaitForSeconds(0.3f); // 착지 대기
@@ -60,6 +65,9 @@ public abstract class PlayModeTestBase
         if (keyboard != null) InputSystem.RemoveDevice(keyboard);
         InputSystem.settings.backgroundBehavior = oldBackground;
         InputSystem.settings.editorInputBehaviorInPlayMode = oldEditorInput;
+
+        GameManager.SkipMenuOnce = false;
+        GameManager.QuitOverride = null;
 
         if (hadBest) PlayerPrefs.SetInt(BestScoreKey, oldBest);
         else PlayerPrefs.DeleteKey(BestScoreKey);
