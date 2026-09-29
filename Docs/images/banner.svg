@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 260" width="1200" height="260" font-family="Inter, 'Segoe UI', 'Malgun Gothic', sans-serif">
+  <rect width="1200" height="260" fill="#121212"/>
+  <rect x="24" y="24" width="1152" height="212" rx="16" fill="#1E1E1E" stroke="#2C2C2E"/>
+  <!-- 번개 아이콘 -->
+  <path d="M96 64 L64 132 H88 L78 196 L124 112 H98 L112 64 Z" fill="#00E5FF"/>
+  <text x="160" y="112" fill="#FFFFFF" font-size="48" font-weight="600">JumpGirl</text>
+  <text x="162" y="148" fill="#98989D" font-size="18">떨어지는 타일 위에서 점프로 버티며 코인을 모으는 3D 복셀 게임 · 결과보고서</text>
+  <g font-size="14" font-weight="600">
+    <rect x="160" y="172" width="138" height="32" rx="16" fill="#121212" stroke="#2C2C2E"/>
+    <text x="229" y="193" fill="#00E5FF" text-anchor="middle">Unity 6.3 LTS</text>
+    <rect x="310" y="172" width="80" height="32" rx="16" fill="#121212" stroke="#2C2C2E"/>
+    <text x="350" y="193" fill="#00E5FF" text-anchor="middle">URP</text>
+    <rect x="402" y="172" width="130" height="32" rx="16" fill="#121212" stroke="#2C2C2E"/>
+    <text x="467" y="193" fill="#00E5FF" text-anchor="middle">Input System</text>
+    <rect x="544" y="172" width="156" height="32" rx="16" fill="#121212" stroke="#2C2C2E"/>
+    <text x="622" y="193" fill="#00E5FF" text-anchor="middle">Windows 64-bit</text>
+  </g>
+  <circle cx="964" cy="100" r="6" fill="#32D74B"/>
+  <text x="980" y="106" fill="#32D74B" font-size="16" font-weight="600">빌드 완료</text>
+  <text x="956" y="140" fill="#98989D" font-size="14">JumpGirl.exe · 37 MB zip</text>
+</svg>

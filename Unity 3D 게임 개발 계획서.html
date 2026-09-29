@@ -403,6 +403,20 @@
       </table>
     </div>
 
+    <h3 class="ver">v10 · 2026-09-29 · Windows 포팅, README 결과보고서</h3>
+    <p class="note">사용자 요청으로 게임을 Windows에서 실행할 수 있게 빌드하고, 첨부한 디자인 가이드를 참고해 결과보고서 <code>README.md</code>를 작성했습니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>항목</th><th>이전 (v9)</th><th>변경 (v10)</th><th>이유 / 사용자 선택</th></tr></thead>
+        <tbody>
+          <tr><td>배포</td><td>에디터에서만 실행</td><td>Windows 64비트 <code>JumpGirl.exe</code> (Mono), <code>Builds/JumpGirl_Windows.zip</code></td><td>사용자 요청. 이름·전체 화면·zip·깃 제외는 사용자 선택. IL2CPP 모듈이 없어 Mono</td></tr>
+          <tr><td>화면</td><td>1024×768 창 설정</td><td>창 없는 전체 화면, 모니터 해상도, Alt+Enter로 창 모드</td><td>사용자 선택</td></tr>
+          <tr><td>빌드 도구</td><td>없음</td><td><code>WindowsBuilder</code> (Tools → Voxel → Build Windows)</td><td>메뉴 한 번으로 다시 빌드</td></tr>
+          <tr><td>결과보고서</td><td>없음</td><td><code>README.md</code> + <code>Docs/images</code> (SVG 배너·대시보드, 스크린샷)</td><td>사용자 요청. GitHub가 CSS를 적용하지 않아 디자인 가이드의 색·카드는 SVG로 반영 (사용자 선택)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <h3 class="ver">본문에 아직 반영하지 않은 차이</h3>
     <p class="note">실제 작업이 계획서 본문과 달라졌지만 본문은 아직 고치지 않은 부분입니다.</p>
     <div class="card scroll">
