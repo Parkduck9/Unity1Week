@@ -169,7 +169,8 @@
       <b>할일 목록에 없던 추가 작업</b>
       <ul>
         <li>에디터 도구: <code>VoxelCharacterBuilder</code>, <code>LevelBuilder</code>, <code>PreviewCapture</code></li>
-        <li>PlayMode 자동 테스트: <code>Assets/Tests/PlayMode/PlayerMovementTests.cs</code></li>
+        <li>에디터 도구: <code>AnimationBuilder</code> (Tools → Voxel → Build Animations)</li>
+        <li>PlayMode 자동 테스트: <code>PlayerMovementTests.cs</code>(8개), <code>PlayerAnimationTests.cs</code>(4개), 공통 준비 <code>PlayModeTestBase.cs</code></li>
         <li><code>캐릭터 미리보기.html</code> (사용자 요청)</li>
       </ul>
     </div>
@@ -207,12 +208,12 @@
       { id: "2-8", text: "이동 / 점프 / 카메라 동작 테스트 (자동 테스트 8개 통과 · 직접 플레이 확인 대기)", done: false },
     ]},
     { no: 3, title: "Idle / Walk / Jump 애니메이션", items: [
-      { id: "3-1", text: "Idle 애니메이션 제작", done: false },
-      { id: "3-2", text: "Walk 애니메이션 제작 (팔·다리 교차 스윙)", done: false },
-      { id: "3-3", text: "Jump 애니메이션 제작 (팔 올리기, 다리 모으기)", done: false },
-      { id: "3-4", text: "Animator Controller 구성: Idle ↔ Walk, Any State → Jump", done: false },
-      { id: "3-5", text: "<code>PlayerController</code>에서 애니메이션 파라미터 전달", done: false },
-      { id: "3-6", text: "애니메이션 전환 테스트", done: false },
+      { id: "3-1", text: "Idle 애니메이션 제작 (숨쉬기 + 머리 살짝 기울이기)", done: true },
+      { id: "3-2", text: "Walk 애니메이션 제작 (팔 35°·다리 15° 교차 스윙 + 몸 튐)", done: true },
+      { id: "3-3", text: "Jump 애니메이션 제작 (팔 올리기 + 몸 늘이기)", done: true },
+      { id: "3-4", text: "Animator Controller 구성: Idle ↔ Walk, Any State → Jump (공중에 있을 때)", done: true },
+      { id: "3-5", text: "<code>PlayerController</code>에서 애니메이션 파라미터 전달 (Speed, Grounded)", done: true },
+      { id: "3-6", text: "애니메이션 전환 테스트 (자동 테스트 4개 통과 · 직접 플레이 확인 대기)", done: false },
     ]},
     { no: 4, title: "아이템 추가", items: [
       { id: "4-1", text: "아이템 모델 / 머티리얼 제작", done: false },
@@ -307,6 +308,21 @@
       done: "에디터에서 직접 플레이하지 않고 <b>PlayMode 자동 테스트 8개</b>로 확인",
       basis: "Claude는 Unity를 명령줄(batchmode)로만 실행할 수 있어서 키보드로 직접 조작할 수 없음",
       reason: "가상 키보드 입력 자동 테스트로 대신 확인 → 실제 조작감은 아직 확인하지 않음" },
+    { id: "3-3", title: "점프 동작", kinds: ["user"],
+      plan: "Jump: 팔 올리기, <b>다리 모으기</b>",
+      done: "팔 올리기 + <b>몸 늘이기</b> (뜰 때 세로로 늘었다가 돌아옴)",
+      basis: "1단계에서 발목까지 오는 치마로 바꿔 다리가 치마 속에 가려짐",
+      reason: "다리 모으기는 보이지 않아 의미가 없음 → 사용자에게 묻고 대체 동작 결정" },
+    { id: "3-4", title: "점프 전환 조건", kinds: ["user"],
+      plan: "Any State → Jump (점프 입력 시)",
+      done: "Any State → Jump (<b>공중에 있을 때</b>, <code>Grounded = false</code>)",
+      basis: "계획에는 점프하지 않고 맵 밖·구멍으로 떨어지는 상황이 없었음",
+      reason: "사용자에게 묻고, 떨어질 때도 Jump 동작을 보여주기로 함" },
+    { id: "3-6", title: "전환 테스트", kinds: ["user"],
+      plan: "애니메이션 전환 테스트",
+      done: "PlayMode 자동 테스트 4개 통과, <b>체크는 하지 않음</b>",
+      basis: "2-8에서 사용자가 정한 규칙: 자동 테스트만으로 체크하지 않고 직접 플레이 후 체크",
+      reason: "같은 규칙 적용" },
     { id: "2단계", title: "조명", kinds: ["none"],
       plan: "조명: 카메라 쪽에서 비추기 (사용자 선택)",
       done: "조명을 바꾸지 않음",

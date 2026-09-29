@@ -24,7 +24,11 @@ public class PlayerController : MonoBehaviour
     [Tooltip("비워두면 Main Camera 기준으로 이동")]
     [SerializeField] Transform cameraTransform;
 
+    static readonly int SpeedHash = Animator.StringToHash("Speed");
+    static readonly int GroundedHash = Animator.StringToHash("Grounded");
+
     Rigidbody rb;
+    Animator animator;
     InputAction moveAction;
     InputAction jumpAction;
     Vector3 moveDirection;
@@ -39,6 +43,7 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        animator = GetComponentInChildren<Animator>();
         moveAction = InputSystem.actions?.FindAction("Player/Move");
         jumpAction = InputSystem.actions?.FindAction("Player/Jump");
         if (moveAction == null || jumpAction == null)
@@ -67,6 +72,13 @@ public class PlayerController : MonoBehaviour
         moveDirection = Vector3.ClampMagnitude(forward * input.y + right * input.x, 1f);
 
         if (jumpAction.WasPressedThisFrame()) jumpRequested = true;
+    }
+
+    void LateUpdate()
+    {
+        if (animator == null) return;
+        animator.SetFloat(SpeedHash, HorizontalSpeed);
+        animator.SetBool(GroundedHash, IsGrounded);
     }
 
     void FixedUpdate()

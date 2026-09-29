@@ -167,9 +167,11 @@
       <li class="card step"><div class="num">3</div><div>
         <h3>Idle / Walk / Jump 애니메이션</h3>
         <ul>
-          <li>Animator Controller: Idle ↔ Walk, Any State → Jump</li>
+          <li>Animator Controller: Idle ↔ Walk, Any State → Jump (<b>공중에 있을 때</b>, 점프하지 않고 떨어질 때 포함)</li>
           <li>파츠 Transform 키프레임으로 제작</li>
-          <li>Walk: 팔·다리 교차 스윙 / Jump: 팔 올리기, 다리 모으기</li>
+          <li>Idle: 숨쉬기 + 머리 살짝 기울이기</li>
+          <li>Walk: 팔(35°)·다리(15°) 교차 스윙 + 몸 튐 (다리는 치마를 뚫지 않게 작게)</li>
+          <li>Jump: 팔 올리기 + 몸 늘이기</li>
         </ul>
       </div></li>
       <li class="card step"><div class="num">4</div><div>
@@ -275,6 +277,20 @@
         <thead><tr><th>항목</th><th>이전 (v2)</th><th>변경 (v3)</th><th>이유</th></tr></thead>
         <tbody>
           <tr><td>1단계 캐릭터</td><td>모습 설명 없음 (실제로는 파란 티셔츠의 남자 캐릭터)</td><td><b>한복풍 여자 캐릭터</b> (긴 머리, 저고리, 허리띠, 발목 치마)</td><td>사용자 요청. 치마 길이(발목), 디테일(중간), 기존 캐릭터 처리(교체)는 물어보고 정함</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="ver">v4 · 2026-09-29 · 3단계 착수</h3>
+    <p class="note">3단계를 시작하기 전에 정해지지 않은 부분과 계획대로 할 수 없는 부분을 물어보고 3단계 설명을 고쳤습니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>항목</th><th>이전 (v3)</th><th>변경 (v4)</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td>Jump 동작</td><td>팔 올리기, <b>다리 모으기</b></td><td>팔 올리기 + <b>몸 늘이기</b></td><td>v3에서 발목까지 오는 치마로 바뀌어 다리가 보이지 않음. 사용자 선택</td></tr>
+          <tr><td>Jump 전환 조건</td><td>Any → Jump (점프 입력으로 이해)</td><td>Any → Jump (<b>공중에 있을 때</b>)</td><td>점프하지 않고 맵 밖·구멍으로 떨어질 때도 Jump 동작을 보여주기 위함. 사용자 선택</td></tr>
+          <tr><td>Walk 동작</td><td>팔·다리 교차 스윙</td><td>+ 각도 지정 (팔 35°, 다리 15°), 몸 튐</td><td>다리를 크게 흔들면 치마를 뚫고 나옴. 사용자 선택</td></tr>
+          <tr><td>Idle 동작</td><td>설명 없음</td><td>숨쉬기 + 머리 살짝 기울이기</td><td>사용자 선택</td></tr>
         </tbody>
       </table>
     </div>

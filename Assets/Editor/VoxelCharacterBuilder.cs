@@ -100,6 +100,12 @@ public static class VoxelCharacterBuilder
         AddPhysics(root);
         root.AddComponent<PlayerController>();
 
+        // 애니메이션: Model에 Animator (몸 전체의 튐·늘이기는 Model 자신을 움직임)
+        var animator = model.gameObject.AddComponent<Animator>();
+        animator.runtimeAnimatorController = AnimationBuilder.EnsureController();
+        animator.applyRootMotion = false;
+        animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+
         Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         UnityEngine.Object.DestroyImmediate(root);

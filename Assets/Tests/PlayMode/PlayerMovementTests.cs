@@ -2,70 +2,16 @@ using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.LowLevel;
-using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 /// <summary>
 /// 2단계 확인: 이동 / 점프 / 낙하 / 카메라.
 /// 가상 키보드로 입력을 넣고 Main 씬의 결과를 확인한다.
 /// </summary>
-public class PlayerMovementTests
+public class PlayerMovementTests : PlayModeTestBase
 {
     static readonly Vector3 StartPosition = new Vector3(-1.5f, 0f, -1.5f);
     static readonly Vector3 CameraOffset = new Vector3(0f, 5f, -4.5f);
-
-    Keyboard keyboard;
-    GameObject player;
-    Rigidbody rb;
-    InputSettings.BackgroundBehavior oldBackground;
-    InputSettings.EditorInputBehaviorInPlayMode oldEditorInput;
-
-    [UnitySetUp]
-    public IEnumerator SetUp()
-    {
-        // batchmode에서는 창 포커스가 없으므로 포커스와 무관하게 입력을 받게 한다
-        oldBackground = InputSystem.settings.backgroundBehavior;
-        oldEditorInput = InputSystem.settings.editorInputBehaviorInPlayMode;
-        InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
-        InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
-
-        keyboard = InputSystem.AddDevice<Keyboard>();
-        SceneManager.LoadScene("Main");
-        yield return null;
-        yield return null;
-
-        player = GameObject.Find("VoxelCharacter");
-        Assert.IsNotNull(player, "VoxelCharacter가 씬에 없습니다.");
-        rb = player.GetComponent<Rigidbody>();
-        yield return new WaitForSeconds(0.3f); // 착지 대기
-    }
-
-    [TearDown]
-    public void TearDown()
-    {
-        if (keyboard != null) InputSystem.RemoveDevice(keyboard);
-        InputSystem.settings.backgroundBehavior = oldBackground;
-        InputSystem.settings.editorInputBehaviorInPlayMode = oldEditorInput;
-    }
-
-    void Press(params Key[] keys) => InputSystem.QueueStateEvent(keyboard, new KeyboardState(keys));
-    void ReleaseAll() => InputSystem.QueueStateEvent(keyboard, new KeyboardState());
-
-    IEnumerator Hold(float seconds, params Key[] keys)
-    {
-        Press(keys);
-        yield return new WaitForSeconds(seconds);
-        ReleaseAll();
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    void Teleport(Vector3 position)
-    {
-        rb.linearVelocity = Vector3.zero;
-        rb.position = position;
-        player.transform.position = position;
-    }
 
     [UnityTest]
     public IEnumerator StartsOnStartTile_FacingCamera()

@@ -144,6 +144,7 @@ public static class LevelBuilder
     {
         try
         {
+            AnimationBuilder.Build();
             VoxelCharacterBuilder.Build();
             AssetDatabase.SaveAssets();
             Build();
@@ -168,6 +169,9 @@ public static class LevelBuilder
                 Close("char-front.png", new Vector3(0.7f, 0.9f, -1.9f));
                 Close("char-back.png", new Vector3(-0.8f, 0.9f, 1.9f));
                 Close("char-side.png", new Vector3(2.1f, 0.6f, 0f));
+
+                // 애니메이션 자세
+                AnimationBuilder.CapturePoses(dir);
             }
         }
         catch (Exception e)
