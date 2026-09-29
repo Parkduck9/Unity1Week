@@ -186,6 +186,23 @@ public static class LevelBuilder
         resultText.fontStyle = FontStyles.Bold;
         resultText.alignment = TextAlignmentOptions.Center;
         resultText.textWrappingMode = TextWrappingModes.NoWrap;
+
+        // 재시작 카운트다운: 결과 문구 아래 숫자 (6단계 사용자 결정)
+        var countdownGo = new GameObject("CountdownText", typeof(RectTransform));
+        var countdownRect = (RectTransform)countdownGo.transform;
+        countdownRect.SetParent(resultRect, false);
+        countdownRect.anchorMin = new Vector2(0.5f, 0.5f);
+        countdownRect.anchorMax = new Vector2(0.5f, 0.5f);
+        countdownRect.sizeDelta = new Vector2(300f, 200f);
+        countdownRect.anchoredPosition = new Vector2(0f, -150f);
+        var countdownText = countdownGo.AddComponent<TextMeshProUGUI>();
+        countdownText.text = "3";
+        countdownText.fontSize = 140f;
+        countdownText.fontStyle = FontStyles.Bold;
+        countdownText.color = Color.white;
+        countdownText.alignment = TextAlignmentOptions.Center;
+        countdownText.textWrappingMode = TextWrappingModes.NoWrap;
+        countdownGo.SetActive(false);
         result.SetActive(false);
 
         var manager = ui.AddComponent<UIManager>();
@@ -193,6 +210,7 @@ public static class LevelBuilder
         so.FindProperty("itemText").objectReferenceValue = text;
         so.FindProperty("resultPanel").objectReferenceValue = result;
         so.FindProperty("resultText").objectReferenceValue = resultText;
+        so.FindProperty("countdownText").objectReferenceValue = countdownText;
         so.ApplyModifiedPropertiesWithoutUndo();
         return manager;
     }
@@ -202,7 +220,12 @@ public static class LevelBuilder
     {
         var canvas = GameObject.Find(UIName).GetComponent<Canvas>();
         var ui = canvas.GetComponent<UIManager>();
-        if (result.HasValue) ui.ShowResult(result.Value); else ui.HideResult();
+        if (result.HasValue)
+        {
+            ui.ShowResult(result.Value);
+            ui.ShowCountdown(3); // 결과가 나온 직후 모습
+        }
+        else ui.HideResult();
 
         var main = Camera.main.transform;
         PreviewCapture.Capture(file, main.position, main.rotation, 60f, 960, 540, cam =>

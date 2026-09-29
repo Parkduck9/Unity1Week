@@ -197,8 +197,9 @@
       <li class="card step"><div class="num">6</div><div>
         <h3>3초 후 재시작</h3>
         <ul>
-          <li>종료 후 카운트다운 표시: 3 → 2 → 1</li>
-          <li>코루틴으로 기다린 뒤 <code>SceneManager.LoadScene</code>으로 현재 씬 다시 불러오기</li>
+          <li>게임이 끝나자마자 카운트다운 표시: 3 → 2 → 1 (결과 문구 아래 숫자, 바뀔 때마다 커졌다 작아짐)</li>
+          <li>코루틴으로 1초씩 기다린 뒤 <code>SceneManager.LoadScene</code>으로 현재 씬 다시 불러오기 (끝나고 재시작까지 총 3초)</li>
+          <li>키로 바로 재시작하는 기능은 넣지 않음</li>
         </ul>
       </div></li>
     </ol>
@@ -323,6 +324,19 @@
           <tr><td>클리어 때 캐릭터</td><td>입력 막기</td><td>입력 막기 + 그 자리에 멈춰 Idle</td><td>사용자 선택 (계획대로)</td></tr>
           <tr><td>떨어질 때 카메라</td><td>설명 없음 (끝까지 따라감)</td><td>맵 높이에서 멈춤</td><td>끝까지 따라가면 맵이 화면 밖으로 사라짐. 사용자 선택</td></tr>
           <tr><td>스크립트 역할</td><td>GameManager: 상태·승패·재시작 / UIManager: 표시</td><td>+ GameManager가 아이템 개수 세기, UIManager는 표시만</td><td>승패 판정에 개수가 필요해 4단계의 UIManager 개수 세기를 GameManager로 옮김</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="ver">v7 · 2026-09-29 · 6단계 착수</h3>
+    <p class="note">6단계를 시작하기 전에 정해지지 않은 부분을 물어보고 6단계 설명을 고쳤습니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>항목</th><th>이전 (v6)</th><th>변경 (v7)</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td>카운트다운 모양</td><td>3 → 2 → 1 표시</td><td>결과 문구 아래 숫자만, 바뀔 때마다 커졌다 작아짐</td><td>기본 폰트에 한글이 없어 숫자로 표시. 사용자 선택</td></tr>
+          <tr><td>시작 시점</td><td>종료 후</td><td>게임이 끝나자마자 (재시작까지 총 3초)</td><td>사용자 선택 (계획대로)</td></tr>
+          <tr><td>바로 재시작</td><td>설명 없음</td><td>넣지 않음</td><td>사용자 선택 (계획대로)</td></tr>
         </tbody>
       </table>
     </div>
