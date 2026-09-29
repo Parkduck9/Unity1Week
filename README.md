@@ -1,9 +1,9 @@
 <p align="center"><img src="Docs/images/banner.svg" alt="JumpGirl 결과보고서" width="100%"></p>
 
-# JumpGirl — 결과보고서
+# JumpGirl 결과보고서
 
-> 4×4 타일이 하나씩 흔들리다 떨어지는 맵 위에서 **점프로 버티며 코인을 모으는** 3D 복셀 게임입니다.
-> Unity 6.3 LTS(URP)로 만들었고, 캐릭터·맵·애니메이션·UI를 모두 **에디터 스크립트로 생성**했습니다.
+> 4×4 타일이 하나씩 흔들리다 떨어지는 맵 위에서 점프로 버티며 코인을 모으는 3D 복셀 게임입니다.
+> Unity 6.3 LTS(URP)로 만들었고 캐릭터·맵·애니메이션·UI는 모두 에디터 스크립트가 생성합니다.
 
 ## 한눈에 보기
 
@@ -11,10 +11,10 @@
 
 | 항목 | 결과 |
 |---|---|
-| 개발 단계 | **0~10단계 완료** (Windows 포팅 포함) |
-| 자동 테스트 | PlayMode **41개 모두 통과** |
+| 개발 단계 | 0~10단계 완료 (Windows 포팅 포함) |
+| 자동 테스트 | PlayMode 41개 모두 통과 |
 | Windows 빌드 | `JumpGirl.exe` 64비트, 경고 0 · 에러 0, 배포 zip 37 MB |
-| 캐릭터 | 한복풍 여자 캐릭터, 복셀 **11,090개** (블록 0.025) |
+| 캐릭터 | 한복풍 여자 캐릭터, 복셀 11,090개 (블록 0.025) |
 | 기간 | 2026-09-29 |
 
 ---
@@ -30,13 +30,13 @@
 </table>
 
 ### 규칙
-- 타일이 **흔들리다(1초) 떨어지고**, 잠시 뒤 아래에서 다시 올라옵니다.
-- 떨어지는 간격은 **3초 → 1초**, 동시에 비어 있는 칸은 **1 → 14칸**으로 1분에 걸쳐 늘어납니다.
-- 캐릭터 주변 8칸 중 **최소 1칸은 항상 남아** 있어, 점프로 옮겨 가면 버틸 수 있습니다.
-- 코인은 1.5초마다 빈 칸에 생기고 **3초 뒤 사라집니다**.
-  - 0~2초: 금색, **100점**
+- 타일은 1초 동안 흔들리다 떨어지고 잠시 뒤 아래에서 다시 올라옵니다.
+- 떨어지는 간격은 3초에서 1초로 짧아지고 동시에 비는 칸은 1칸에서 14칸까지 1분에 걸쳐 늘어납니다.
+- 캐릭터 주변 8칸 중 최소 1칸은 늘 남겨 두기 때문에 점프로 옮겨 가면 버틸 수 있습니다.
+- 코인은 1.5초마다 빈 칸에 생겼다가 3초 뒤 사라집니다.
+  - 0~2초: 금색, 100점
   - 2~3초: 회색으로 깜빡임, 0점
-- 떨어지면(`y < -5`) 게임 오버입니다. 최고 점수는 저장되고, 기록을 넘으면 **NEW BEST!** 가 뜹니다.
+- 떨어지면(`y < -5`) 게임 오버입니다. 최고 점수는 저장되며 기록을 넘으면 NEW BEST! 가 뜹니다.
 
 ### 조작
 | 키 | 동작 |
@@ -57,15 +57,15 @@
 ## 2. Windows에서 실행하기
 
 > [!NOTE]
-> 빌드 결과물(약 100 MB)은 용량 때문에 저장소에 올리지 않습니다. 아래 방법으로 직접 만들 수 있습니다.
+> 빌드 결과물(약 100 MB)은 용량이 커서 저장소에 올리지 않았습니다. 아래 방법으로 직접 만들 수 있습니다.
 
-1. Unity **6000.3.25f1**로 프로젝트를 엽니다.
-2. 메뉴 **Tools → Voxel → Build Windows**를 누릅니다.
-3. 결과가 만들어집니다.
-   - `Builds/Windows/JumpGirl.exe` — 바로 실행
-   - `Builds/JumpGirl_Windows.zip` — 다른 PC에 보낼 때 (압축을 풀고 `JumpGirl.exe` 실행)
+1. Unity 6000.3.25f1로 프로젝트를 엽니다.
+2. 메뉴에서 Tools → Voxel → Build Windows를 누릅니다.
+3. 다음 두 가지가 만들어집니다.
+   - `Builds/Windows/JumpGirl.exe`: 바로 실행
+   - `Builds/JumpGirl_Windows.zip`: 다른 PC에 보낼 때 (압축을 풀고 `JumpGirl.exe` 실행)
 
-명령줄로 빌드할 때:
+명령줄로 빌드하려면:
 
 ```powershell
 & "C:\Program Files\Unity\Hub\Editor\6000.3.25f1\Editor\Unity.exe" -batchmode -projectPath . -executeMethod WindowsBuilder.BuildFromCommandLine -logFile build.log
@@ -74,12 +74,12 @@
 | 설정 | 값 |
 |---|---|
 | 대상 | Windows 64비트 (`StandaloneWindows64`) |
-| 스크립트 실행 방식 | Mono (IL2CPP 모듈이 설치되어 있지 않음) |
+| 스크립트 실행 방식 | Mono (IL2CPP 모듈 없음) |
 | 화면 | 창 없는 전체 화면, 모니터 해상도 |
 
 ## 3. 캐릭터
 
-ChatGPT(Codex)로 만든 참고 그림을 보고, 0.025 크기 블록으로 다시 쌓았습니다. 쌓는 코드는 [`DetailedCharacterBuilder.cs`](Assets/Editor/DetailedCharacterBuilder.cs)에 있습니다.
+ChatGPT(Codex)로 만든 참고 그림을 보며 0.025 크기 블록으로 다시 쌓았습니다. 쌓는 코드는 [`DetailedCharacterBuilder.cs`](Assets/Editor/DetailedCharacterBuilder.cs)에 있습니다.
 
 <table>
   <tr>
@@ -94,7 +94,7 @@ ChatGPT(Codex)로 만든 참고 그림을 보고, 0.025 크기 블록으로 다�
 |---|---|---|
 | 1차 | 0.05 상자 | 투박함 |
 | 2차 | 0.025 곡면 | 비스듬한 면이 계단처럼 지저분함 |
-| **3차 (적용)** | 0.025, 평평한 면 + 둥근 모서리 + 곧은 벽 | 복셀 11,090개, 색마다 서브메시 1개, 보이는 면만 생성 |
+| 3차 (적용) | 0.025, 평평한 면 + 둥근 모서리 + 곧은 벽 | 복셀 11,090개, 색마다 서브메시 1개, 보이는 면만 생성 |
 
 애니메이션 3개(Idle · Walk · Jump)도 스크립트로 만들었습니다.
 
@@ -117,10 +117,10 @@ ChatGPT(Codex)로 만든 참고 그림을 보고, 0.025 크기 블록으로 다�
 | 4 | 금화 아이템, 획득 UI | `72fb3f3` |
 | 5 | GAME OVER / CLEAR 판정 | `0adefcf` |
 | 6 | 3초 카운트다운 재시작 | `16f2d2f` |
-| 7 | **규칙 변경**: 점수, 움직이는 구멍, 코인 생성·소멸, 최고 점수 | `b1d392d` |
+| 7 | 규칙 변경: 점수, 움직이는 구멍, 코인 생성·소멸, 최고 점수 | `b1d392d` |
 | 8 | 디테일 캐릭터(11,090 복셀), 카메라 25% 가까이 | `c94b33c` |
 | 9 | UI: 메인 메뉴(JumpGirl) · 게임 오버 버튼 (자동 재시작 제거) | `5a5dcab` |
-| 10 | Windows 포팅 + 결과보고서 | 이 커밋 |
+| 10 | Windows 포팅 + 결과보고서 | `d30a58b` |
 
 ## 5. 계획 대비 주요 변경
 
@@ -133,33 +133,33 @@ ChatGPT(Codex)로 만든 참고 그림을 보고, 0.025 크기 블록으로 다�
 | 플레이어 뒤쪽 위 카메라 | 고정 각도 쿼터뷰 | 조작이 직관적 (W = 화면 위) |
 | URP 빈 템플릿 | Universal 3D 템플릿 | 6.3 LTS에 URP 빈 템플릿이 없음 |
 
-전체 목록(근거·이유·구분)은 [할일 목록.md](할일%20목록.md#계획-대비-변경-사항)에 있습니다.
+근거·이유·구분까지 적은 전체 목록은 [할일 목록.md](할일%20목록.md#계획-대비-변경-사항)에서 볼 수 있습니다.
 
 ## 6. 문제와 해결
 
 > [!CAUTION]
-> **캐릭터 몸에 얼룩덜룩한 그림자** — URP는 `MeshRenderer.receiveShadows`를 무시합니다.
-> → 캐릭터 머티리얼에서 `_ReceiveShadows = 0`, 키워드 `_RECEIVE_SHADOWS_OFF`를 켜서 해결했습니다.
+> 캐릭터 몸에 얼룩덜룩한 그림자가 생겼습니다. URP는 `MeshRenderer.receiveShadows`를 무시합니다.
+> → 캐릭터 머티리얼에서 `_ReceiveShadows = 0`으로 두고 키워드 `_RECEIVE_SHADOWS_OFF`를 켜서 해결했습니다.
 
 > [!CAUTION]
-> **UI 한글이 네모로 깨짐** — TextMeshPro 기본 폰트(LiberationSans)에 한글이 없습니다.
-> → UI 글자를 영어로 쓰기로 결정했습니다.
+> UI의 한글이 네모로 깨졌습니다. TextMeshPro 기본 폰트(LiberationSans)에 한글이 없기 때문입니다.
+> → UI 글자는 영어로 쓰기로 했습니다.
 
 > [!CAUTION]
-> **디테일 캐릭터 2차가 지저분함** — 비스듬한 곡면을 작은 블록으로 쌓으면 계단 모양이 생깁니다.
+> 디테일 캐릭터 2차가 지저분했습니다. 비스듬한 곡면을 작은 블록으로 쌓으면 계단 모양이 생깁니다.
 > → 평평한 면, 둥근 모서리, 곧은 벽으로 모양을 다시 짰습니다 (3차).
 
 > [!CAUTION]
-> **직접 조작으로 확인할 수 없음** — Unity를 명령줄(배치 모드)로만 실행할 수 있습니다.
-> → 가상 키보드 입력을 넣는 PlayMode 테스트 41개로 확인하고, 동작 확인 항목은 사용자가 직접 플레이한 뒤 체크했습니다.
+> Claude는 Unity를 명령줄(배치 모드)로만 실행할 수 있어 직접 조작해 볼 수 없었습니다.
+> → 가상 키보드 입력을 넣는 PlayMode 테스트 41개로 확인했고 동작 확인 항목은 사용자가 직접 플레이한 뒤 체크했습니다.
 
 > [!CAUTION]
-> **Overlay UI가 스크린샷에 안 찍힘** — Screen Space Overlay 캔버스는 `Camera.Render`에 찍히지 않습니다.
+> Overlay UI가 스크린샷에 찍히지 않았습니다. Screen Space Overlay 캔버스는 `Camera.Render`에 나오지 않습니다.
 > → 캡처할 때만 잠시 Screen Space Camera로 바꿔서 찍습니다.
 
 ## 7. 테스트
 
-`Assets/Tests/PlayMode` — PlayMode 테스트 **41개 모두 통과**
+`Assets/Tests/PlayMode`의 PlayMode 테스트 41개가 모두 통과했습니다.
 
 | 테스트 | 개수 | 확인하는 것 |
 |---|---:|---|
@@ -185,7 +185,7 @@ Docs/images/      README 이미지 (SVG 배너·대시보드, 스크린샷)
 GeneratedImages/  Codex로 만든 참고 그림
 ```
 
-에디터 메뉴 **Tools → Voxel**에서 캐릭터 · 맵 · 애니메이션 · 아이템 · Windows 빌드를 한 번에 다시 만들 수 있습니다.
+캐릭터 · 맵 · 애니메이션 · 아이템 · Windows 빌드는 에디터 메뉴 Tools → Voxel에서 다시 만들 수 있습니다.
 
 ## 9. 문서
 
@@ -205,4 +205,21 @@ GeneratedImages/  Codex로 만든 참고 그림
 
 ---
 
-<sub>README 디자인: 첨부 디자인 가이드(WattVision DESIGN.md)의 색(#121212 · #1E1E1E · #00E5FF · #32D74B · #FF453A), 16px 둥근 카드, 12칸 그리드(KPI 3개 → 그래프 8칸 + 알림 4칸)를 SVG로 반영했습니다.</sub>
+<sub>README 디자인은 첨부 디자인 가이드(WattVision DESIGN.md)의 색(#121212 · #1E1E1E · #00E5FF · #32D74B · #FF453A), 16px 둥근 카드, 12칸 그리드(KPI 3개 → 그래프 8칸 + 알림 4칸)를 SVG로 옮긴 것입니다. 문장은 [im-not-ai](https://github.com/epoko77-ai/im-not-ai)의 한글 AI 티 규칙(quick-rules)으로 다듬었습니다.</sub>
+
+<!-- HUMANIZE-SUMMARY (im-not-ai quick-rules 수동 적용, 2026-09-29)
+metrics:
+  change_rate: 약 8.2% (단어 기준, git word-diff)
+  self_check: 6/6
+  grade: B
+categories:  # before → after
+  J-1 본문 볼드: 23 → 0
+  J-3 대시 부가 설명: 9 → 0
+  C-11 연결어미 뒤 쉼표: 4 → 0
+highlights:
+  - before: "# JumpGirl — 결과보고서"
+    after: "# JumpGirl 결과보고서"
+  - before: "타일이 **흔들리다(1초) 떨어지고**, 잠시 뒤 아래에서 다시 올라옵니다."
+    after: "타일은 1초 동안 흔들리다 떨어지고 잠시 뒤 아래에서 다시 올라옵니다."
+grade_reason: "B: S1 0건, 커밋 번호·수치 보존. 변경률이 A 기준(10~25%)보다 낮음"
+-->
