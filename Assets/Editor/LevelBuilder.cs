@@ -158,6 +158,16 @@ public static class LevelBuilder
                 // 맵 전체를 보는 확인용 시점
                 PreviewCapture.Capture(Path.Combine(dir, "overview.png"), new Vector3(0f, 6.5f, -5.5f),
                     Quaternion.LookRotation(new Vector3(0f, -6.5f, 5.5f)));
+
+                // 캐릭터 확대 (시작 위치에서 카메라 쪽 -Z를 바라보는 상태)
+                var p = GameObject.Find(VoxelCharacterBuilder.CharacterName).transform.position;
+                var look = p + Vector3.up * 0.55f;
+                void Close(string file, Vector3 offset) =>
+                    PreviewCapture.Capture(Path.Combine(dir, file), p + offset,
+                        Quaternion.LookRotation(look - (p + offset)), 35f, 640, 640);
+                Close("char-front.png", new Vector3(0.7f, 0.9f, -1.9f));
+                Close("char-back.png", new Vector3(-0.8f, 0.9f, 1.9f));
+                Close("char-side.png", new Vector3(2.1f, 0.6f, 0f));
             }
         }
         catch (Exception e)

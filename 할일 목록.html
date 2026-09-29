@@ -17,6 +17,8 @@
     --ok-soft: #e4f5ea;
     --warn: #b7791f;
     --warn-soft: #fcf3dc;
+    --bad: #c93434;
+    --bad-soft: #fbe7e7;
     --track: #e9ecef;
     --code: #f0f2f5;
   }
@@ -33,6 +35,8 @@
       --ok-soft: #1a3226;
       --warn: #e3b457;
       --warn-soft: #3a3020;
+      --bad: #f07a7a;
+      --bad-soft: #3a1f22;
       --track: #2a2f37;
       --code: #262b33;
     }
@@ -104,6 +108,30 @@
     border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer;
   }
   button:hover { border-color: var(--accent); color: var(--accent); }
+
+  section.changes { margin-top: 32px; }
+  section.changes h2 { font-size: 20px; margin: 0 0 6px; }
+  section.changes > p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
+  .kind { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; white-space: nowrap; margin: 1px 0; }
+  .kind.user { background: var(--accent-soft); color: var(--accent); }
+  .kind.cant { background: var(--warn-soft); color: var(--warn); }
+  .kind.none { background: var(--track); color: var(--muted); }
+  .kind.self { background: var(--bad-soft); color: var(--bad); }
+  .change-list { display: grid; gap: 10px; }
+  .change {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px;
+  }
+  .change.needs { border-left: 4px solid var(--bad); }
+  .change-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .change-head b { font-size: 15px; }
+  .change-head .id { font-family: Consolas, monospace; font-size: 12px; color: var(--muted); background: var(--track); padding: 1px 6px; border-radius: 4px; }
+  .change dl { display: grid; grid-template-columns: 78px 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+  .change dt { color: var(--muted); }
+  .change dd { margin: 0; }
+  .extra { margin-top: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 18px; font-size: 14px; }
+  .extra ul { margin: 6px 0 0; padding-left: 18px; }
+  @media (max-width: 600px) { .change dl { grid-template-columns: 1fr; } .change dt { margin-top: 4px; } }
 </style>
 </head>
 <body>
@@ -123,6 +151,26 @@
   </div>
 
   <div id="stages"></div>
+
+  <section class="changes">
+    <h2>계획 대비 변경 사항</h2>
+    <p>원래 할일과 다르게 진행한 항목입니다. 빨간 줄이 있는 카드는 사용자에게 묻지 않고 정한 것이라 확인이 필요합니다.</p>
+    <div class="legend">
+      <span><span class="kind user">사용자 결정</span> 물어보고 정함</span>
+      <span><span class="kind cant">원래대로 불가</span> 환경·도구 때문에 그대로 할 수 없었음</span>
+      <span><span class="kind none">할 필요 없음</span> 이미 되어 있었음</span>
+      <span><span class="kind self">임의 결정</span> 묻지 않고 Claude가 정함 → 확인 필요</span>
+    </div>
+    <div class="change-list" id="changes"></div>
+    <div class="extra">
+      <b>할일 목록에 없던 추가 작업</b>
+      <ul>
+        <li>에디터 도구: <code>VoxelCharacterBuilder</code>, <code>LevelBuilder</code>, <code>PreviewCapture</code></li>
+        <li>PlayMode 자동 테스트: <code>Assets/Tests/PlayMode/PlayerMovementTests.cs</code></li>
+        <li><code>캐릭터 미리보기.html</code> (사용자 요청)</li>
+      </ul>
+    </div>
+  </section>
 
   <div class="foot">
     <span>✔ 표시가 붙은 항목은 Claude가 작업을 마치고 체크한 항목입니다. 나머지는 직접 클릭해서 체크할 수 있으며 이 브라우저에만 저장됩니다.</span>
@@ -192,6 +240,88 @@
       { id: "f-3", text: "콘솔 에러 / 경고 없음 확인", done: false },
     ]},
   ];
+
+  // 계획 대비 변경 사항 (할일 목록.md의 같은 섹션과 함께 갱신)
+  // kind: user = 사용자 결정, cant = 원래대로 불가, none = 할 필요 없음, self = 임의 결정(확인 필요)
+  const CHANGES = [
+    { id: "0-1", title: "템플릿", kinds: ["cant", "self"],
+      plan: "URP 템플릿으로 생성",
+      done: "<b>Universal 3D</b> 템플릿 (<code>3d-cross-platform</code>)",
+      basis: "6000.3.25f1 설치 폴더의 템플릿 목록에 URP 빈 템플릿(<code>urp-blank</code>)이 없음. <code>urp-blank</code>는 LTS가 아닌 6000.6.3f1에만 있음",
+      reason: "\"Unity 6 LTS\" 조건을 지키면서 URP를 쓸 수 있는 템플릿이 Universal 3D뿐이었음. 보고만 하고 묻지는 않음" },
+    { id: "0-2", title: "Input System", kinds: ["none"],
+      plan: "Input System 설치 및 설정",
+      done: "따로 설치하지 않음",
+      basis: "<code>manifest.json</code>에 <code>com.unity.inputsystem 1.20.0</code>, <code>activeInputHandler: 1</code>(Input System 전용)",
+      reason: "템플릿에 이미 포함되어 있음" },
+    { id: "0-3", title: "폴더 추가", kinds: ["self"],
+      plan: "폴더 5개 생성",
+      done: "5개 + <code>Editor</code>, <code>Tests</code>, <code>Materials/Character·Level·Physics</code>",
+      basis: "에디터 도구와 테스트는 Unity 규칙상 별도 폴더가 필요함",
+      reason: "캐릭터·맵을 스크립트로 다시 만들고, 동작을 자동 테스트로 확인하기 위함" },
+    { id: "0-4", title: "메인 씬", kinds: ["self"],
+      plan: "메인 씬 생성",
+      done: "템플릿의 <code>SampleScene</code>을 <code>Main</code>으로 이름 변경",
+      basis: "SampleScene에 Main Camera, Directional Light, Global Volume이 이미 있음",
+      reason: "템플릿 기본 구성을 그대로 쓰기 위함" },
+    { id: "1단계", title: "캐릭터 교체", kinds: ["user"],
+      plan: "복셀 캐릭터 생성",
+      done: "남자 캐릭터 → <b>한복풍 여자 캐릭터</b>로 교체",
+      basis: "사용자가 레퍼런스 이미지를 주고 수정을 요청함",
+      reason: "치마(발목 길이), 디테일(중간), 기존 캐릭터 처리(교체)는 물어보고 정함" },
+    { id: "1-1", title: "머티리얼 이름", kinds: ["self"],
+      plan: "캐릭터용 머티리얼",
+      done: "저고리에 기존 <code>Shirt.mat</code> 이름을 그대로 씀. <code>Pants.mat</code>은 쓰지 않지만 남아 있음",
+      basis: "교체 전 남자 캐릭터용 에셋 이름",
+      reason: "기존 에셋을 재사용함 → 이름과 용도가 맞지 않게 됨" },
+    { id: "1-2", title: "신발·다리 색", kinds: ["self"],
+      plan: "머리 / 몸 / 팔 / 다리 파츠",
+      done: "디테일 추가. 신발(짙은 갈색)과 다리(피부색)의 색을 정함",
+      basis: "레퍼런스 이미지에 신발과 다리가 보이지 않음",
+      reason: "치마 아래로 보이는 신발의 색이 필요했음" },
+    { id: "1-4", title: "씬 배치", kinds: ["self"],
+      plan: "캐릭터 프리팹 저장",
+      done: "저장 + Main 씬에 배치",
+      basis: "1단계 결과를 씬에서 바로 확인하려고 함",
+      reason: "2단계에서 시작 위치로 옮겨 계속 사용" },
+    { id: "2-2", title: "타일 수", kinds: ["user"],
+      plan: "4x4 타일맵 (16개)",
+      done: "구멍 2칸, <b>타일 14개</b>, 초록 체커무늬",
+      basis: "사용자가 구멍 있는 맵, 배치안 B, 초록 체커무늬를 선택함",
+      reason: "난이도 추가, 칸과 구멍 구분" },
+    { id: "2-3", title: "물리 방식", kinds: ["user"],
+      plan: "Rigidbody 또는 CharacterController",
+      done: "<b>Rigidbody</b>",
+      basis: "사용자가 선택함",
+      reason: "중력·낙하·Trigger 처리가 간단함" },
+    { id: "2-7", title: "카메라", kinds: ["user"],
+      plan: "플레이어 뒤쪽 위에서 따라가기",
+      done: "<b>고정 각도 쿼터뷰</b>",
+      basis: "사용자가 선택함",
+      reason: "조작이 직관적이고(W = 화면 위쪽) 맵 전체가 잘 보임" },
+    { id: "2-8", title: "동작 테스트", kinds: ["cant", "self"],
+      plan: "이동 / 점프 / 카메라 동작 테스트",
+      done: "에디터에서 직접 플레이하지 않고 <b>PlayMode 자동 테스트 8개</b>로 확인",
+      basis: "Claude는 Unity를 명령줄(batchmode)로만 실행할 수 있어서 키보드로 직접 조작할 수 없음",
+      reason: "가상 키보드 입력 자동 테스트로 대신 확인 → 실제 조작감은 아직 확인하지 않음" },
+    { id: "2단계", title: "조명", kinds: ["none"],
+      plan: "조명: 카메라 쪽에서 비추기 (사용자 선택)",
+      done: "조명을 바꾸지 않음",
+      basis: "씬의 조명 회전값을 확인해 보니 이미 카메라 쪽(-Z)에서 비추고 있었음",
+      reason: "1단계 프리뷰의 얼굴이 어두웠던 원인은 프리뷰 카메라 위치였음" },
+  ];
+  const KIND_LABEL = { user: "사용자 결정", cant: "원래대로 불가", none: "할 필요 없음", self: "임의 결정" };
+  document.getElementById("changes").innerHTML = CHANGES.map(c => `
+    <div class="change${c.kinds.includes("self") ? " needs" : ""}">
+      <div class="change-head"><span class="id">${c.id}</span><b>${c.title}</b>
+        ${c.kinds.map(k => `<span class="kind ${k}">${KIND_LABEL[k]}</span>`).join("")}</div>
+      <dl>
+        <dt>원래 할일</dt><dd>${c.plan}</dd>
+        <dt>실제</dt><dd>${c.done}</dd>
+        <dt>근거</dt><dd>${c.basis}</dd>
+        <dt>이유</dt><dd>${c.reason}</dd>
+      </dl>
+    </div>`).join("");
 
   const KEY = "unity1week-todo-checks";
   let mine = {};

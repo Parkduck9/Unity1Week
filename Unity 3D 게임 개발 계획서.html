@@ -89,6 +89,10 @@
   .state.bad { background: var(--bad-soft); color: var(--bad); }
   .arrow { color: var(--muted); }
   .note { color: var(--muted); font-size: 14px; margin-top: 10px; }
+  h3.ver { font-size: 16px; margin: 22px 0 0; }
+  h3.ver + .note { margin: 4px 0 10px; }
+  .card.scroll { overflow-x: auto; padding: 6px 14px; }
+  .card.scroll table { min-width: 620px; font-size: 14px; }
   @media (max-width: 600px) {
     .goal { grid-template-columns: 1fr; }
     td:first-child { white-space: normal; }
@@ -145,6 +149,7 @@
       <li class="card step"><div class="num">1</div><div>
         <h3>3D 복셀 캐릭터 생성</h3>
         <ul>
+          <li>캐릭터: 한복풍 옷을 입은 여자 캐릭터 (사용자 레퍼런스 이미지 기준) — 긴 검은 머리, 붉은 저고리와 갈색 깃, 흰 프릴 퍼프 소매, 남색 허리띠, 발목까지 오는 분홍 치마</li>
           <li>Cube를 조합해 캐릭터 제작</li>
           <li>파츠 분리: 머리 / 몸 / 왼팔 / 오른팔 / 왼다리 / 오른다리 (애니메이션용)</li>
           <li>프리팹으로 저장</li>
@@ -223,6 +228,67 @@
           <tr><td><code>Item</code></td><td>회전 연출, 획득 처리</td></tr>
           <tr><td><code>GameManager</code></td><td>상태 관리, 승패 판정, 재시작</td></tr>
           <tr><td><code>UIManager</code></td><td>아이템 개수, 결과 문구, 카운트다운 표시</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>변경 이력</h2>
+
+    <h3 class="ver">v1 · 2026-09-29 · 계획서 작성</h3>
+    <p class="note">원래 계획(<code>Unity 3D 게임 개발 계획.md</code>, 6줄)을 검토하고 사용자 결정을 반영해 새로 작성했습니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>항목</th><th>원래 계획</th><th>계획서 v1</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td>0단계</td><td>프로젝트 생성</td><td>Unity 6 LTS, URP, Input System 명시</td><td>버전·렌더 파이프라인·입력 방식이 정해지지 않았음</td></tr>
+          <tr><td>1단계</td><td>복셀 캐릭터 생성</td><td>머리/몸/팔/다리를 Cube로 분리</td><td>3단계 애니메이션을 하려면 파츠가 나뉘어 있어야 함</td></tr>
+          <tr><td>2단계</td><td>4x4 타일맵에서 걷기</td><td>이동 + <b>점프</b> + 따라가는 카메라</td><td>점프 기능을 만드는 단계가 빠져 있었음, 카메라는 사용자 결정</td></tr>
+          <tr><td>3단계</td><td>walk, jump 애니메이션</td><td><b>Idle</b> 추가</td><td>멈춰 있을 때의 동작이 필요함</td></tr>
+          <tr><td>4단계</td><td>아이템 추가</td><td>3개, Trigger 획득, 개수 UI</td><td>개수와 획득 방식이 없었음, 3개는 사용자 결정</td></tr>
+          <tr><td>5단계</td><td>떨어지면 종료, 다 모으면 성공</td><td><code>y &lt; -5</code> 기준, GameManager, 결과 문구</td><td>"떨어짐" 기준이 없었음, 상태 관리·문구는 사용자 결정</td></tr>
+          <tr><td>6단계</td><td>3초 뒤 재시작</td><td>카운트다운 표시, <code>SceneManager.LoadScene</code></td><td>재시작 방식이 없었음, 카운트다운은 사용자 결정</td></tr>
+          <tr><td>스크립트 구성</td><td>없음</td><td>스크립트 5개 역할 정리</td><td>구현 전에 역할을 나눠 두기 위함</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="ver">v2 · 2026-09-29 · 2단계 착수 (커밋 <code>780d5b2</code>)</h3>
+    <p class="note">2단계를 시작하기 전에 정해지지 않은 부분을 물어보고, 결정에 맞게 2단계 설명을 고쳤습니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>항목</th><th>이전 (v1)</th><th>변경 (v2)</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td>맵 구성</td><td>타일 16개로 4x4 맵</td><td>가운데 대각선 2칸이 구멍, <b>타일 14개</b>, 초록 체커무늬</td><td>사용자 선택: 구멍 있는 맵(배치안 B)으로 난이도 추가. 체커무늬는 칸과 구멍 위치를 구분하기 쉽게</td></tr>
+          <tr><td>이동 / 점프</td><td>이동(WASD / 방향키), 점프(Space)</td><td><b>Rigidbody</b> 기반, 초당 3칸, 점프 높이 1.2칸</td><td>사용자 선택: Rigidbody(중력·낙하·Trigger 처리가 간단), 조작감 "보통"</td></tr>
+          <tr><td>캐릭터 방향</td><td>이동 방향으로 회전</td><td>+ <b>시작 시 카메라 쪽</b>을 바라봄</td><td>사용자 선택: 시작하자마자 얼굴이 보이게</td></tr>
+          <tr><td>카메라</td><td>플레이어 <b>뒤쪽 위</b>에서 따라감</td><td><b>고정 각도 쿼터뷰</b> (W = 화면 위쪽)</td><td>사용자 선택: 조작이 직관적이고 4x4 맵과 구멍이 잘 보임</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="ver">v3 · 2026-09-29 · 캐릭터를 여자 캐릭터로 교체</h3>
+    <p class="note">사용자가 레퍼런스 이미지를 주고 캐릭터 수정을 요청해, 1단계 설명에 캐릭터 모습을 추가했습니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>항목</th><th>이전 (v2)</th><th>변경 (v3)</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td>1단계 캐릭터</td><td>모습 설명 없음 (실제로는 파란 티셔츠의 남자 캐릭터)</td><td><b>한복풍 여자 캐릭터</b> (긴 머리, 저고리, 허리띠, 발목 치마)</td><td>사용자 요청. 치마 길이(발목), 디테일(중간), 기존 캐릭터 처리(교체)는 물어보고 정함</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="ver">본문에 아직 반영하지 않은 차이</h3>
+    <p class="note">실제 작업이 계획서 본문과 달라졌지만 본문은 아직 고치지 않은 부분입니다.</p>
+    <div class="card scroll">
+      <table>
+        <thead><tr><th>위치</th><th>계획서 본문</th><th>실제</th><th>이유</th></tr></thead>
+        <tbody>
+          <tr><td>개요</td><td>맵 밖으로 떨어지면 게임 오버</td><td>맵 밖 <b>또는 구멍</b>으로 떨어지면 게임 오버</td><td>v2에서 구멍 있는 맵을 선택했기 때문</td></tr>
+          <tr><td>0단계</td><td>Unity 6 LTS, URP 템플릿</td><td>Unity <b>6000.3.25f1</b> (6.3 LTS), Universal 3D 템플릿, 씬 이름 <code>Main</code></td><td>설치된 두 버전 중 LTS 기준으로 선택. 이 템플릿에 URP와 Input System이 함께 들어 있음</td></tr>
+          <tr><td>1단계</td><td>머리/몸/팔/다리 6개 파츠</td><td>+ 머리카락, 눈, 깃, 허리띠, 치마 3단, 소매, 프릴, 신발 (큐브 26개), <code>Model</code> 오브젝트. 치마는 몸통에 붙음</td><td>레퍼런스처럼 보이도록 디테일 추가. <code>Model</code>은 3단계 Animator 위치. 치마는 걸을 때 흔들리지 않게</td></tr>
+          <tr><td>스크립트 구성</td><td>게임 스크립트 5개</td><td>+ 에디터 도구 <code>VoxelCharacterBuilder</code>, <code>LevelBuilder</code>, <code>PreviewCapture</code>, PlayMode 테스트</td><td>캐릭터·맵을 메뉴 한 번으로 다시 만들고, 동작을 자동 테스트로 확인하기 위함</td></tr>
         </tbody>
       </table>
     </div>

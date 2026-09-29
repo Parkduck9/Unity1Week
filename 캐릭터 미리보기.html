@@ -92,7 +92,7 @@
 <div class="wrap">
   <header>
     <h1>캐릭터 미리보기</h1>
-    <p>1단계 복셀 캐릭터 · <code>Assets/Prefabs/VoxelCharacter.prefab</code> · <a href="할일 목록.html">할일 목록</a> · <a href="Unity 3D 게임 개발 계획서.html">계획서</a></p>
+    <p>1단계 복셀 캐릭터 (한복풍 여자 캐릭터) · <code>Assets/Prefabs/VoxelCharacter.prefab</code> · <a href="할일 목록.html">할일 목록</a> · <a href="Unity 3D 게임 개발 계획서.html">계획서</a></p>
   </header>
 
   <div class="viewer-card">
@@ -123,7 +123,7 @@
     <div class="grid">
       <div class="stat"><small>키</small><b>1.08 unit</b></div>
       <div class="stat"><small>복셀 1칸</small><b>0.1 unit</b></div>
-      <div class="stat"><small>큐브 수</small><b>14개</b></div>
+      <div class="stat"><small>큐브 수</small><b id="cube-count">-</b></div>
       <div class="stat"><small>앞 방향</small><b>+Z</b></div>
       <div class="stat"><small>콜라이더</small><b>캡슐 1개</b></div>
     </div>
@@ -144,10 +144,11 @@
     <h2>계층 구조</h2>
 <pre>VoxelCharacter        Rigidbody · CapsuleCollider · PlayerController
 └─ Model              3단계 Animator 위치
-   ├─ Body            몸통
-   ├─ Head            목 피벗 → 얼굴, Hair_Top, Hair_Back, Eye_L, Eye_R
-   ├─ Arm_L / Arm_R   어깨 피벗 → 팔, Sleeve
-   └─ Leg_L / Leg_R   엉덩이 피벗 → 다리, Shoe</pre>
+   ├─ Body            저고리, Collar_L/R(깃), Sash(허리띠), Skirt_Top/Mid/Bottom(치마 3단)
+   ├─ Head            목 피벗 → 얼굴, Hair_Top/Back/Side_L/Side_R, Bangs, Bangs_Side, Eye_L/R
+   ├─ Arm_L / Arm_R   어깨 피벗 → 팔, Sleeve(퍼프 소매), Frill(흰 프릴)
+   └─ Leg_L / Leg_R   엉덩이 피벗 → 다리, Shoe (치마 속, 신발만 보임)</pre>
+    <p class="note">치마는 다리가 아니라 몸통(Body)에 붙어 있어서 걸을 때 다리와 함께 흔들리지 않습니다.</p>
     <p class="note">이 페이지의 치수와 색은 <code>Assets/Editor/VoxelCharacterBuilder.cs</code>와 같습니다. 스크립트 값을 바꾸면 이 페이지의 <code>PARTS</code> 데이터도 함께 고쳐야 합니다.</p>
   </section>
 </div>
@@ -155,37 +156,54 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
   // ===== VoxelCharacterBuilder.cs와 같은 데이터 (Unity 좌표) =====
+  // 머티리얼 이름은 Unity 에셋 이름과 같음 (Shirt.mat = 저고리)
   const COLORS = {
-    Skin:  [1.00, 0.80, 0.62],
-    Shirt: [0.25, 0.50, 0.90],
-    Pants: [0.20, 0.22, 0.35],
-    Shoe:  [0.15, 0.15, 0.17],
-    Hair:  [0.35, 0.22, 0.12],
-    Eye:   [0.08, 0.08, 0.10],
+    Skin:   [1.00, 0.89, 0.82],
+    Hair:   [0.13, 0.11, 0.12],
+    Eye:    [0.16, 0.14, 0.15],
+    Shirt:  [0.66, 0.20, 0.25],
+    Collar: [0.55, 0.36, 0.22],
+    Sash:   [0.26, 0.30, 0.50],
+    Skirt:  [0.94, 0.56, 0.76],
+    Frill:  [0.97, 0.95, 0.95],
+    Shoe:   [0.30, 0.18, 0.15],
   };
-  const HIP = 0.35, SHOULDER = 0.70;
+  const HIP = 0.35, SHOULDER = 0.70, ARM_X = 0.26, LEG_X = 0.09;
   const PARTS = [
     { name: "Body", pivot: [0, HIP, 0], cubes: [
-      { name: "Mesh", pos: [0, 0.175, 0], size: [0.40, 0.35, 0.20], mat: "Shirt" } ] },
+      { name: "Mesh", pos: [0, 0.225, 0], size: [0.36, 0.25, 0.20], mat: "Shirt" },
+      { name: "Collar_L", pos: [-0.035, 0.26, 0.106], size: [0.05, 0.19, 0.012], mat: "Collar", rot: [0, 0, 21] },
+      { name: "Collar_R", pos: [0.035, 0.26, 0.106], size: [0.05, 0.19, 0.012], mat: "Collar", rot: [0, 0, -21] },
+      { name: "Sash", pos: [0, 0.12, 0], size: [0.38, 0.08, 0.22], mat: "Sash" },
+      { name: "Skirt_Top", pos: [0, 0.04, 0], size: [0.38, 0.12, 0.24], mat: "Skirt" },
+      { name: "Skirt_Mid", pos: [0, -0.085, 0], size: [0.44, 0.13, 0.30], mat: "Skirt" },
+      { name: "Skirt_Bottom", pos: [0, -0.205, 0], size: [0.50, 0.11, 0.36], mat: "Skirt" } ] },
     { name: "Head", pivot: [0, SHOULDER, 0], joint: "목", cubes: [
       { name: "Mesh", pos: [0, 0.175, 0], size: [0.35, 0.35, 0.35], mat: "Skin" },
       { name: "Hair_Top", pos: [0, 0.34, 0], size: [0.37, 0.08, 0.37], mat: "Hair" },
-      { name: "Hair_Back", pos: [0, 0.25, -0.16], size: [0.37, 0.20, 0.06], mat: "Hair" },
-      { name: "Eye_L", pos: [-0.08, 0.19, 0.18], size: [0.06, 0.08, 0.02], mat: "Eye" },
-      { name: "Eye_R", pos: [0.08, 0.19, 0.18], size: [0.06, 0.08, 0.02], mat: "Eye" } ] },
+      { name: "Hair_Back", pos: [0, 0.07, -0.18], size: [0.37, 0.62, 0.07], mat: "Hair" },
+      { name: "Hair_Side_L", pos: [-0.19, 0.18, -0.03], size: [0.06, 0.32, 0.30], mat: "Hair" },
+      { name: "Hair_Side_R", pos: [0.19, 0.18, -0.03], size: [0.06, 0.32, 0.30], mat: "Hair" },
+      { name: "Bangs", pos: [0, 0.31, 0.185], size: [0.37, 0.06, 0.04], mat: "Hair" },
+      { name: "Bangs_Side", pos: [0.115, 0.25, 0.185], size: [0.14, 0.06, 0.04], mat: "Hair" },
+      { name: "Eye_L", pos: [-0.08, 0.17, 0.18], size: [0.06, 0.08, 0.02], mat: "Eye" },
+      { name: "Eye_R", pos: [0.08, 0.17, 0.18], size: [0.06, 0.08, 0.02], mat: "Eye" } ] },
     ...[["Arm_L", -1], ["Arm_R", 1]].map(([name, side]) => ({
-      name, pivot: [0.275 * side, SHOULDER, 0], joint: "어깨", cubes: [
-        { name: "Mesh", pos: [0, -0.175, 0], size: [0.15, 0.35, 0.15], mat: "Skin" },
-        { name: "Sleeve", pos: [0, -0.06, 0], size: [0.16, 0.12, 0.16], mat: "Shirt" } ] })),
+      name, pivot: [ARM_X * side, SHOULDER, 0], joint: "어깨", cubes: [
+        { name: "Mesh", pos: [0, -0.165, 0], size: [0.13, 0.33, 0.13], mat: "Skin" },
+        { name: "Sleeve", pos: [0, -0.08, 0], size: [0.17, 0.16, 0.17], mat: "Shirt" },
+        { name: "Frill", pos: [0, -0.175, 0], size: [0.18, 0.03, 0.18], mat: "Frill" } ] })),
     ...[["Leg_L", -1], ["Leg_R", 1]].map(([name, side]) => ({
-      name, pivot: [0.10 * side, HIP, 0], joint: "엉덩이", cubes: [
-        { name: "Mesh", pos: [0, -0.175, 0], size: [0.20, 0.35, 0.20], mat: "Pants" },
-        { name: "Shoe", pos: [0, -0.31, 0.01], size: [0.21, 0.08, 0.22], mat: "Shoe" } ] })),
+      name, pivot: [LEG_X * side, HIP, 0], joint: "엉덩이", cubes: [
+        { name: "Mesh", pos: [0, -0.175, 0], size: [0.14, 0.35, 0.14], mat: "Skin" },
+        { name: "Shoe", pos: [0, -0.31, 0.02], size: [0.15, 0.08, 0.20], mat: "Shoe" } ] })),
   ];
+  const CUBE_COUNT = PARTS.reduce((n, p) => n + p.cubes.length, 0);
 
   // ===== 파츠 표 =====
   const fmt = v => v.map(n => n.toFixed(3).replace(/\.?0+$/, "") || "0").join(", ");
   const rgbCss = c => `rgb(${c.map(n => Math.round(n * 255)).join(",")})`;
+  document.getElementById("cube-count").textContent = `${CUBE_COUNT}개`;
   const tbody = document.getElementById("parts");
   PARTS.forEach(p => {
     const tr = document.createElement("tr");
@@ -195,7 +213,8 @@
     p.cubes.forEach(c => {
       const r = document.createElement("tr");
       r.className = "part-row"; r.dataset.part = p.name; r.dataset.cube = c.name;
-      r.innerHTML = `<td class="indent">${c.name}</td><td>${fmt(c.pos)} <small style="color:var(--muted)">(로컬)</small></td><td>${fmt(c.size)}</td><td><span class="swatch" style="background:${rgbCss(COLORS[c.mat])}"></span>${c.mat}</td>`;
+      const rot = c.rot ? ` <small style="color:var(--muted)">(회전 z ${c.rot[2]}°)</small>` : "";
+      r.innerHTML = `<td class="indent">${c.name}</td><td>${fmt(c.pos)} <small style="color:var(--muted)">(로컬)</small></td><td>${fmt(c.size)}${rot}</td><td><span class="swatch" style="background:${rgbCss(COLORS[c.mat])}"></span>${c.mat}</td>`;
       tbody.appendChild(r);
     });
   });
@@ -251,6 +270,8 @@
         const mesh = new THREE.Mesh(box, materials[c.mat].clone());
         mesh.scale.set(...c.size);
         mesh.position.copy(u(c.pos));
+        // z축 회전은 z 부호를 뒤집어도 같은 각도로 유지된다
+        if (c.rot) mesh.rotation.set(0, 0, THREE.MathUtils.degToRad(c.rot[2]));
         mesh.castShadow = true; mesh.receiveShadow = true;
         mesh.userData = { part: p.name, cube: c.name };
         pivot.add(mesh);
