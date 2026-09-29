@@ -239,6 +239,18 @@
       { id: "6-3", text: "<code>SceneManager.LoadScene</code>으로 현재 씬 다시 불러오기", done: true },
       { id: "6-4", text: "재시작 후 상태 / 아이템 / UI 초기화 확인 (자동 테스트 3개 통과 · 직접 플레이 확인 대기)", done: false },
     ]},
+    { no: 7, title: "시스템 변경: 점수 + 움직이는 구멍 (설계 확정, 구현 전)", items: [
+      { id: "7-1", text: "구멍 메우기: 16칸 모두 배치, 고정 금화 3개·ITEM UI·CLEAR 판정 제거", done: false },
+      { id: "7-2", text: "<code>Tile</code>: 흔들림(1초) → 떨어짐 → 없음 → 아래에서 올라와 다시 생김(0.3초)", done: false },
+      { id: "7-3", text: "<code>HoleManager</code>: 주기 3초 → 1초, 최대 구멍 수 1 → 15 (1분에 걸쳐), 캐릭터 발밑 포함", done: false },
+      { id: "7-4", text: "<code>HoleManager</code>: 최대치를 넘으면 가장 오래된 구멍 다시 생성", done: false },
+      { id: "7-5", text: "<code>CoinSpawner</code>: 1.5초마다 빈 칸에 코인 생성 (여러 개 동시)", done: false },
+      { id: "7-6", text: "<code>Item</code>: 수명 3초, 0~2초 금색 100점, 2~3초 회색·깜빡임 0점", done: false },
+      { id: "7-7", text: "점수: 코인 1개 = 100점, 왼쪽 위 <code>SCORE</code> 표시", done: false },
+      { id: "7-8", text: "최고 점수: PlayerPrefs 저장, 오른쪽 위 <code>BEST</code> 표시", done: false },
+      { id: "7-9", text: "자동 테스트 새로 작성 (기존 아이템·CLEAR 테스트 교체)", done: false },
+      { id: "7-10", text: "직접 플레이 확인", done: false },
+    ]},
     { no: "✓", title: "최종 확인", items: [
       { id: "f-1", text: "처음부터 클리어까지 플레이 테스트", done: false },
       { id: "f-2", text: "처음부터 게임 오버까지 플레이 테스트", done: false },
