@@ -1,19 +1,19 @@
-using System;
 using System.IO;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// 큐브를 조합해 복셀 캐릭터 프리팹을 만들고 Main 씬에 배치한다.
+/// 큐브를 조합해 복셀 캐릭터(플레이어) 프리팹을 만든다.
+/// 씬 배치는 LevelBuilder가 담당한다.
 /// 메뉴: Tools > Voxel > Build Character
 /// </summary>
 public static class VoxelCharacterBuilder
 {
     const string MaterialDir = "Assets/Materials/Character";
-    const string PrefabPath = "Assets/Prefabs/VoxelCharacter.prefab";
-    const string ScenePath = "Assets/Scenes/Main.unity";
-    const string CharacterName = "VoxelCharacter";
+    const string PhysicsMaterialPath = "Assets/Materials/Physics/NoFriction.physicMaterial";
+    public const string PrefabPath = "Assets/Prefabs/VoxelCharacter.prefab";
+    public const string CharacterName = "VoxelCharacter";
+    public const float Height = 1.08f;
 
     // 복셀 1칸 = 0.1 unit
     const float Hip = 0.35f;      // 엉덩이(다리 피벗) 높이
@@ -27,7 +27,13 @@ public static class VoxelCharacterBuilder
     static readonly Color EyeColor = new Color(0.08f, 0.08f, 0.10f);
 
     [MenuItem("Tools/Voxel/Build Character")]
-    public static void Build()
+    public static void BuildMenu()
+    {
+        Build();
+        AssetDatabase.SaveAssets();
+    }
+
+    public static GameObject Build()
     {
         var skin = CreateMaterial("Skin", SkinColor);
         var shirt = CreateMaterial("Shirt", ShirtColor);
@@ -67,25 +73,47 @@ public static class VoxelCharacterBuilder
             CreateCube("Shoe", leg, new Vector3(0f, -0.31f, 0.01f), new Vector3(0.21f, 0.08f, 0.22f), shoe);
         }
 
+        AddPhysics(root);
+        root.AddComponent<PlayerController>();
+
         Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
         UnityEngine.Object.DestroyImmediate(root);
-
-        PlaceInMainScene(prefab);
-        AssetDatabase.SaveAssets();
         Debug.Log($"[VoxelCharacterBuilder] Saved {PrefabPath}");
+        return prefab;
     }
 
-    static void PlaceInMainScene(GameObject prefab)
+    static void AddPhysics(GameObject root)
     {
-        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-        foreach (var go in scene.GetRootGameObjects())
+        var rb = root.AddComponent<Rigidbody>();
+        rb.mass = 1f;
+        rb.freezeRotation = true; // 회전은 PlayerController가 직접 처리
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+        var capsule = root.AddComponent<CapsuleCollider>();
+        capsule.center = new Vector3(0f, Height / 2f, 0f);
+        capsule.height = Height;
+        capsule.radius = 0.25f;
+        capsule.sharedMaterial = GetNoFrictionMaterial(); // 타일 옆면에 달라붙지 않도록
+    }
+
+    static PhysicsMaterial GetNoFrictionMaterial()
+    {
+        var mat = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>(PhysicsMaterialPath);
+        if (mat != null) return mat;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(PhysicsMaterialPath));
+        mat = new PhysicsMaterial("NoFriction")
         {
-            if (go.name == CharacterName) UnityEngine.Object.DestroyImmediate(go);
-        }
-        var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-        instance.transform.position = Vector3.zero;
-        EditorSceneManager.SaveScene(scene);
+            staticFriction = 0f,
+            dynamicFriction = 0f,
+            frictionCombine = PhysicsMaterialCombine.Minimum,
+            bounciness = 0f,
+            bounceCombine = PhysicsMaterialCombine.Minimum,
+        };
+        AssetDatabase.CreateAsset(mat, PhysicsMaterialPath);
+        return mat;
     }
 
     static Material CreateMaterial(string name, Color color)
@@ -121,59 +149,5 @@ public static class VoxelCharacterBuilder
         cube.transform.localPosition = localPosition;
         cube.transform.localScale = size;
         cube.GetComponent<MeshRenderer>().sharedMaterial = mat;
-    }
-
-    // batchmode 실행용: Unity.exe -batchmode -quit -executeMethod VoxelCharacterBuilder.BuildFromCommandLine [-previewDir <폴더>]
-    public static void BuildFromCommandLine()
-    {
-        try
-        {
-            Build();
-            var args = Environment.GetCommandLineArgs();
-            var idx = Array.IndexOf(args, "-previewDir");
-            if (idx >= 0 && idx + 1 < args.Length) CapturePreviews(args[idx + 1]);
-        }
-        catch (Exception e)
-        {
-            Debug.LogException(e);
-            EditorApplication.Exit(1);
-        }
-    }
-
-    static void CapturePreviews(string dir)
-    {
-        Directory.CreateDirectory(dir);
-        var target = new Vector3(0f, 0.5f, 0f);
-        Capture(Path.Combine(dir, "front.png"), new Vector3(1.1f, 1.0f, 2.0f), target);
-        Capture(Path.Combine(dir, "back.png"), new Vector3(-1.3f, 1.0f, -1.8f), target);
-        Capture(Path.Combine(dir, "side.png"), new Vector3(2.3f, 0.6f, 0f), target);
-    }
-
-    static void Capture(string file, Vector3 position, Vector3 lookAt)
-    {
-        const int w = 640, h = 640;
-        var camGo = new GameObject("PreviewCamera");
-        var cam = camGo.AddComponent<Camera>();
-        cam.transform.position = position;
-        cam.transform.LookAt(lookAt);
-        cam.fieldOfView = 35f;
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0.82f, 0.86f, 0.92f);
-
-        var rt = new RenderTexture(w, h, 24);
-        cam.targetTexture = rt;
-        cam.Render();
-
-        RenderTexture.active = rt;
-        var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
-        tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-        tex.Apply();
-        File.WriteAllBytes(file, tex.EncodeToPNG());
-
-        RenderTexture.active = null;
-        cam.targetTexture = null;
-        UnityEngine.Object.DestroyImmediate(rt);
-        UnityEngine.Object.DestroyImmediate(tex);
-        UnityEngine.Object.DestroyImmediate(camGo);
     }
 }

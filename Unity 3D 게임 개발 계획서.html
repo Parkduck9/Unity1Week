@@ -153,10 +153,10 @@
       <li class="card step"><div class="num">2</div><div>
         <h3>4x4 타일맵 + 이동 / 점프 + 따라가는 카메라</h3>
         <ul>
-          <li>1 unit 크기 타일 16개로 4x4 맵 구성</li>
-          <li>캐릭터 이동(WASD / 방향키), 점프(Space)</li>
-          <li>이동 방향으로 캐릭터 회전</li>
-          <li>따라가는 카메라: 플레이어 뒤쪽 위에서 부드럽게 따라감</li>
+          <li>1 unit 크기 타일로 4x4 맵 구성, 가운데 대각선 2칸은 구멍 (타일 14개, 초록 체커무늬)</li>
+          <li>Rigidbody 기반 캐릭터 이동(WASD / 방향키, 초당 3칸), 점프(Space, 높이 1.2칸)</li>
+          <li>이동 방향으로 캐릭터 회전, 시작 시 카메라 쪽을 바라봄</li>
+          <li>따라가는 카메라: 고정 각도 쿼터뷰로 부드럽게 따라감 (W = 화면 위쪽)</li>
         </ul>
       </div></li>
       <li class="card step"><div class="num">3</div><div>
