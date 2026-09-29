@@ -44,7 +44,7 @@ public static class VoxelCharacterBuilder
         var skin = CreateMaterial("Skin", SkinColor);
         var hair = CreateMaterial("Hair", HairColor);
         var eye = CreateMaterial("Eye", EyeColor);
-        var top = CreateMaterial("Shirt", TopColor);
+        var top = CreateMaterial("Top", TopColor);
         var collar = CreateMaterial("Collar", CollarColor);
         var sash = CreateMaterial("Sash", SashColor);
         var skirt = CreateMaterial("Skirt", SkirtColor);

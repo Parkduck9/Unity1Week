@@ -156,12 +156,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
   // ===== VoxelCharacterBuilder.cs와 같은 데이터 (Unity 좌표) =====
-  // 머티리얼 이름은 Unity 에셋 이름과 같음 (Shirt.mat = 저고리)
+  // 머티리얼 이름은 Unity 에셋 이름과 같음
   const COLORS = {
     Skin:   [1.00, 0.89, 0.82],
     Hair:   [0.13, 0.11, 0.12],
     Eye:    [0.16, 0.14, 0.15],
-    Shirt:  [0.66, 0.20, 0.25],
+    Top:    [0.66, 0.20, 0.25],
     Collar: [0.55, 0.36, 0.22],
     Sash:   [0.26, 0.30, 0.50],
     Skirt:  [0.94, 0.56, 0.76],
@@ -171,7 +171,7 @@
   const HIP = 0.35, SHOULDER = 0.70, ARM_X = 0.26, LEG_X = 0.09;
   const PARTS = [
     { name: "Body", pivot: [0, HIP, 0], cubes: [
-      { name: "Mesh", pos: [0, 0.225, 0], size: [0.36, 0.25, 0.20], mat: "Shirt" },
+      { name: "Mesh", pos: [0, 0.225, 0], size: [0.36, 0.25, 0.20], mat: "Top" },
       { name: "Collar_L", pos: [-0.035, 0.26, 0.106], size: [0.05, 0.19, 0.012], mat: "Collar", rot: [0, 0, 21] },
       { name: "Collar_R", pos: [0.035, 0.26, 0.106], size: [0.05, 0.19, 0.012], mat: "Collar", rot: [0, 0, -21] },
       { name: "Sash", pos: [0, 0.12, 0], size: [0.38, 0.08, 0.22], mat: "Sash" },
@@ -191,7 +191,7 @@
     ...[["Arm_L", -1], ["Arm_R", 1]].map(([name, side]) => ({
       name, pivot: [ARM_X * side, SHOULDER, 0], joint: "어깨", cubes: [
         { name: "Mesh", pos: [0, -0.165, 0], size: [0.13, 0.33, 0.13], mat: "Skin" },
-        { name: "Sleeve", pos: [0, -0.08, 0], size: [0.17, 0.16, 0.17], mat: "Shirt" },
+        { name: "Sleeve", pos: [0, -0.08, 0], size: [0.17, 0.16, 0.17], mat: "Top" },
         { name: "Frill", pos: [0, -0.175, 0], size: [0.18, 0.03, 0.18], mat: "Frill" } ] })),
     ...[["Leg_L", -1], ["Leg_R", 1]].map(([name, side]) => ({
       name, pivot: [LEG_X * side, HIP, 0], joint: "엉덩이", cubes: [
