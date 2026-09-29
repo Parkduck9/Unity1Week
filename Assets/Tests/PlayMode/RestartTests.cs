@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
@@ -7,17 +8,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 /// <summary>
-/// 6단계 확인: 게임이 끝나면 3 → 2 → 1 카운트다운 후 씬을 다시 불러오고, 모든 상태가 처음으로 돌아온다.
+/// 재시작 확인: GAME OVER 뒤 3 → 2 → 1 카운트다운 후 씬을 다시 불러오고,
+/// 점수·땅·코인은 처음으로 돌아오며 최고 점수는 남는다.
 /// </summary>
 public class RestartTests : PlayModeTestBase
 {
     static readonly Vector3 StartPosition = new Vector3(-1.5f, 0f, -1.5f);
-    static readonly Vector3[] ItemPositions =
-    {
-        new Vector3(-0.5f, 0f, -0.5f),
-        new Vector3(0.5f, 0f, 0.5f),
-        new Vector3(1.5f, 0f, 1.5f),
-    };
 
     int loadCount;
     float lastLoadTime;
@@ -41,19 +37,18 @@ public class RestartTests : PlayModeTestBase
 
     static Transform ResultPanel => GameObject.Find("UI").transform.Find("ResultPanel");
     static TMP_Text Countdown => ResultPanel.Find("CountdownText").GetComponent<TMP_Text>();
-    static TMP_Text ItemText => GameObject.Find("ItemText").GetComponent<TMP_Text>();
+    static TMP_Text ScoreText => GameObject.Find("ScoreText").GetComponent<TMP_Text>();
+    static TMP_Text BestText => GameObject.Find("BestText").GetComponent<TMP_Text>();
 
-    IEnumerator CollectAll()
+    IEnumerator FallOffEdge()
     {
-        foreach (var p in ItemPositions)
-        {
-            Teleport(p);
-            yield return new WaitForSeconds(0.2f);
-        }
+        Press(Key.A);
+        for (var t = 0f; t < 3f && !ResultPanel.gameObject.activeSelf; t += Time.deltaTime) yield return null;
+        ReleaseAll();
     }
 
-    /// <summary>결과가 나온 뒤 카운트다운 숫자와 재시작 시점을 기록한다.</summary>
-    IEnumerator RecordCountdown(System.Collections.Generic.List<string> numbers, System.Action<float> onRestart)
+    /// <summary>결과가 나온 뒤 카운트다운 숫자와 재시작까지 걸린 시간을 기록한다.</summary>
+    IEnumerator RecordCountdown(List<string> numbers, System.Action<float> onRestart)
     {
         Assert.IsTrue(ResultPanel.gameObject.activeSelf, "결과 화면이 나와 있어야 합니다.");
         var start = Time.realtimeSinceStartup;
@@ -70,68 +65,62 @@ public class RestartTests : PlayModeTestBase
     }
 
     [UnityTest]
-    public IEnumerator GameOver_CountsDown_ThenRestarts()
+    public IEnumerator GameOver_CountsDown_ThenRestartsFresh()
     {
-        Press(Key.A); // 맵 밖으로 떨어짐
-        for (var t = 0f; t < 3f && !ResultPanel.gameObject.activeSelf; t += Time.deltaTime) yield return null;
-        ReleaseAll();
+        TileAt(3, 3).Fall(); // 재시작 뒤 땅이 모두 돌아오는지 보기 위해 구멍 하나를 만들어 둠
+        coinSpawner.SpawnAt(TileAt(2, 2));
+        yield return FallOffEdge();
 
-        var numbers = new System.Collections.Generic.List<string>();
+        var numbers = new List<string>();
         var restartAfter = 0f;
         yield return RecordCountdown(numbers, t => restartAfter = t);
 
         CollectionAssert.AreEqual(new[] { "3", "2", "1" }, numbers, "카운트다운은 3 → 2 → 1이어야 합니다.");
         Assert.AreEqual(3f, restartAfter, 0.3f, "게임이 끝나고 약 3초 뒤에 재시작해야 합니다.");
-        yield return AssertFreshStart();
-    }
 
-    [UnityTest]
-    public IEnumerator Clear_CountsDown_ThenRestarts_WithItemsBack()
-    {
-        yield return CollectAll();
-        Assert.AreEqual("CLEAR", ResultPanel.Find("ResultText").GetComponent<TMP_Text>().text);
-
-        var numbers = new System.Collections.Generic.List<string>();
-        var restartAfter = 0f;
-        yield return RecordCountdown(numbers, t => restartAfter = t);
-
-        CollectionAssert.AreEqual(new[] { "3", "2", "1" }, numbers);
-        Assert.AreEqual(3f, restartAfter, 0.3f);
-        yield return AssertFreshStart();
-    }
-
-    [UnityTest]
-    public IEnumerator Countdown_PopsWhenNumberChanges()
-    {
-        Press(Key.A);
-        for (var t = 0f; t < 3f && !ResultPanel.gameObject.activeSelf; t += Time.deltaTime) yield return null;
-        ReleaseAll();
-
-        var countdown = Countdown;
-        yield return null;
-        Assert.Greater(countdown.transform.localScale.x, 1.1f, "숫자가 나올 때 커져 있어야 합니다.");
-        yield return new WaitForSecondsRealtime(0.5f);
-        Assert.AreEqual(1f, countdown.transform.localScale.x, 0.02f, "잠시 뒤 원래 크기로 돌아와야 합니다.");
-    }
-
-    /// <summary>재시작 직후: 새 씬의 캐릭터·아이템·UI가 처음 상태인지 확인</summary>
-    IEnumerator AssertFreshStart()
-    {
-        yield return new WaitForSeconds(0.3f); // 착지 대기
-        player = GameObject.Find("VoxelCharacter");
-        rb = player.GetComponent<Rigidbody>();
-
+        yield return new WaitForSeconds(0.3f);
+        FindSceneObjects();
         var p = player.transform.position;
         Assert.AreEqual(StartPosition.x, p.x, 0.05f, "캐릭터가 시작 위치로 돌아와야 합니다.");
         Assert.AreEqual(StartPosition.z, p.z, 0.05f);
         Assert.AreEqual(0f, p.y, 0.05f);
         Assert.IsFalse(ResultPanel.gameObject.activeSelf, "결과 화면이 사라져야 합니다.");
-        Assert.AreEqual("ITEM 0 / 3", ItemText.text, "아이템 개수가 0으로 돌아와야 합니다.");
-        Assert.AreEqual(3, GameObject.Find("Level/Items").transform.childCount, "금화 3개가 다시 있어야 합니다.");
+        Assert.AreEqual("SCORE 0", ScoreText.text, "점수가 0으로 돌아와야 합니다.");
+        foreach (var tile in holeManager.Tiles) Assert.AreEqual(TileState.Normal, tile.State, "땅이 모두 돌아와야 합니다.");
+        Assert.AreEqual(0, GameObject.Find("Level/Coins").transform.childCount, "코인은 다시 처음부터 생겨야 합니다.");
 
-        // 다시 조작할 수 있어야 함
+        StopSystems();
         var before = player.transform.position;
         yield return Hold(0.3f, Key.D);
         Assert.Greater(player.transform.position.x - before.x, 0.5f, "재시작 후 다시 움직일 수 있어야 합니다.");
+    }
+
+    [UnityTest]
+    public IEnumerator BestScore_KeptAfterRestart()
+    {
+        coinSpawner.SpawnAt(TileAt(1, 0));
+        yield return Hold(0.4f, Key.D);
+        Teleport(CellPosition(0, 0));
+        yield return new WaitForSeconds(0.2f);
+        Assert.AreEqual("SCORE 100", ScoreText.text);
+
+        yield return FallOffEdge();
+        var numbers = new List<string>();
+        yield return RecordCountdown(numbers, _ => { });
+        yield return new WaitForSeconds(0.2f);
+
+        Assert.AreEqual("SCORE 0", ScoreText.text);
+        Assert.AreEqual("BEST 100", BestText.text, "재시작해도 최고 점수는 남아 있어야 합니다.");
+    }
+
+    [UnityTest]
+    public IEnumerator Countdown_PopsWhenNumberChanges()
+    {
+        yield return FallOffEdge();
+        var countdown = Countdown;
+        yield return null;
+        Assert.Greater(countdown.transform.localScale.x, 1.1f, "숫자가 나올 때 커져 있어야 합니다.");
+        yield return new WaitForSecondsRealtime(0.5f);
+        Assert.AreEqual(1f, countdown.transform.localScale.x, 0.02f, "잠시 뒤 원래 크기로 돌아와야 합니다.");
     }
 }

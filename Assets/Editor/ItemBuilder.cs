@@ -13,6 +13,7 @@ public static class ItemBuilder
     public const string PrefabPath = "Assets/Prefabs/Item.prefab";
     const string MeshPath = "Assets/Meshes/Coin.asset";
     const string MaterialPath = "Assets/Materials/Item/Gold.mat";
+    const string ExpiredMaterialPath = "Assets/Materials/Item/GoldExpired.mat"; // 2초가 지나 점수가 없는 코인 (회색)
 
     public const float Diameter = 0.4f;      // 사용자 결정: 중간 크기
     public const float FloatHeight = 0.5f;   // 바닥에서 떠 있는 높이 (캐릭터 허리쯤)
@@ -34,6 +35,7 @@ public static class ItemBuilder
 
     static readonly Color GoldColor = new Color(1.00f, 0.78f, 0.25f);
     static readonly Color GoldEmission = new Color(0.30f, 0.20f, 0.03f);
+    static readonly Color ExpiredColor = new Color(0.55f, 0.55f, 0.58f);
 
     [MenuItem("Tools/Voxel/Build Item")]
     public static void BuildMenu()
@@ -52,6 +54,7 @@ public static class ItemBuilder
     {
         var mesh = BuildCoinMesh();
         var material = CreateGoldMaterial();
+        var expired = CreateExpiredMaterial();
 
         var root = new GameObject("Item");
         var trigger = root.AddComponent<SphereCollider>();
@@ -66,6 +69,7 @@ public static class ItemBuilder
         var item = root.AddComponent<Item>();
         var so = new SerializedObject(item);
         so.FindProperty("visual").objectReferenceValue = coin.transform;
+        so.FindProperty("expiredMaterial").objectReferenceValue = expired;
         so.ApplyModifiedPropertiesWithoutUndo();
 
         Directory.CreateDirectory(Path.GetDirectoryName(PrefabPath));
@@ -131,6 +135,22 @@ public static class ItemBuilder
         mat.EnableKeyword("_EMISSION");
         mat.SetColor("_EmissionColor", GoldEmission);
         mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        EditorUtility.SetDirty(mat);
+        return mat;
+    }
+
+    static Material CreateExpiredMaterial()
+    {
+        var mat = AssetDatabase.LoadAssetAtPath<Material>(ExpiredMaterialPath);
+        if (mat == null)
+        {
+            mat = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(mat, ExpiredMaterialPath);
+        }
+        mat.SetColor("_BaseColor", ExpiredColor);
+        mat.SetFloat("_Metallic", 0.2f);
+        mat.SetFloat("_Smoothness", 0.3f);
+        mat.DisableKeyword("_EMISSION");
         EditorUtility.SetDirty(mat);
         return mat;
     }

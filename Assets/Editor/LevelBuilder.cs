@@ -7,7 +7,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// 4x4 타일맵을 만들고 플레이어, 카메라, 아이템, UI를 Main 씬에 배치한다.
+/// 4x4 타일맵을 만들고 플레이어, 카메라, 게임 관리 오브젝트, UI를 Main 씬에 배치한다.
+/// 7단계: 16칸 모두 막고, 구멍(HoleManager)과 코인(CoinSpawner)은 게임 중에 생긴다.
 /// 메뉴: Tools > Voxel > Build Level
 /// </summary>
 public static class LevelBuilder
@@ -18,16 +19,19 @@ public static class LevelBuilder
     const string LevelName = "Level";
     const string UIName = "UI";
     const string GameManagerName = "GameManager";
+    const string HoleManagerName = "HoleManager";
+    const string CoinSpawnerName = "CoinSpawner";
 
     const float TileSize = 1f;
     const float TileThickness = 0.5f;
 
-    // 맵 배치: # = 타일, . = 구멍, S = 시작 위치, * = 아이템(타일 있음). 첫 줄이 맵 안쪽(+Z)
+    // 맵 배치: # = 타일, . = 구멍, S = 시작 위치(타일 있음). 첫 줄이 맵 안쪽(+Z)
+    // 7단계: 처음에는 16칸 모두 막음 (구멍은 HoleManager가 게임 중에 만든다)
     static readonly string[] Layout =
     {
-        "###*",
-        "#.*#",
-        "#*.#",
+        "####",
+        "####",
+        "####",
         "S###",
     };
 
@@ -56,11 +60,10 @@ public static class LevelBuilder
         var level = new GameObject(LevelName);
         var tiles = new GameObject("Tiles").transform;
         tiles.SetParent(level.transform, false);
-        var items = new GameObject("Items").transform;
-        items.SetParent(level.transform, false);
+        var coins = new GameObject("Coins").transform; // 게임 중에 생기는 코인이 들어감
+        coins.SetParent(level.transform, false);
 
         var startPosition = Vector3.zero;
-        var itemCount = 0;
         var rows = Layout.Length;
         for (var row = 0; row < rows; row++)
         {
@@ -80,13 +83,9 @@ public static class LevelBuilder
                 if ((x + z) % 2 == 1)
                     tile.GetComponentInChildren<MeshRenderer>().sharedMaterial = dark;
 
-                if (cell == '*')
-                {
-                    var item = (GameObject)PrefabUtility.InstantiatePrefab(itemPrefab, scene);
-                    item.name = $"Item_{++itemCount}";
-                    item.transform.SetParent(items, false);
-                    item.transform.localPosition = position + Vector3.up * ItemBuilder.FloatHeight;
-                }
+                var tileSo = new SerializedObject(tile.GetComponent<Tile>());
+                tileSo.FindProperty("cell").vector2IntValue = new Vector2Int(x, z);
+                tileSo.ApplyModifiedPropertiesWithoutUndo();
             }
         }
 
@@ -116,6 +115,28 @@ public static class LevelBuilder
         gm.FindProperty("ui").objectReferenceValue = uiManager;
         gm.ApplyModifiedPropertiesWithoutUndo();
 
+        // 움직이는 구멍
+        var oldHoles = GameObject.Find(HoleManagerName);
+        if (oldHoles != null) UnityEngine.Object.DestroyImmediate(oldHoles);
+        var holeManager = new GameObject(HoleManagerName).AddComponent<HoleManager>();
+        var hm = new SerializedObject(holeManager);
+        hm.FindProperty("tilesRoot").objectReferenceValue = tiles;
+        hm.FindProperty("player").objectReferenceValue = player.transform;
+        hm.FindProperty("gameManager").objectReferenceValue = gameManager;
+        hm.ApplyModifiedPropertiesWithoutUndo();
+
+        // 코인 생성
+        var oldSpawner = GameObject.Find(CoinSpawnerName);
+        if (oldSpawner != null) UnityEngine.Object.DestroyImmediate(oldSpawner);
+        var spawner = new GameObject(CoinSpawnerName).AddComponent<CoinSpawner>();
+        var cs = new SerializedObject(spawner);
+        cs.FindProperty("coinPrefab").objectReferenceValue = itemPrefab.GetComponent<Item>();
+        cs.FindProperty("holeManager").objectReferenceValue = holeManager;
+        cs.FindProperty("gameManager").objectReferenceValue = gameManager;
+        cs.FindProperty("coinsRoot").objectReferenceValue = coins;
+        cs.FindProperty("height").floatValue = ItemBuilder.FloatHeight;
+        cs.ApplyModifiedPropertiesWithoutUndo();
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
@@ -124,7 +145,7 @@ public static class LevelBuilder
 
     /// <summary>
     /// 화면 UI
-    /// - 왼쪽 위 ITEM 0 / 3 (4단계 사용자 결정: 영어 표시, 왼쪽 위)
+    /// - 왼쪽 위 SCORE, 오른쪽 위 BEST (7단계 사용자 결정, 한글 폰트가 없어 영어)
     /// - 결과 화면: 화면 전체를 반투명하게 어둡게 + 가운데 큰 글자 (5단계 사용자 결정)
     /// </summary>
     static UIManager BuildUI()
@@ -140,29 +161,8 @@ public static class LevelBuilder
         scaler.referenceResolution = new Vector2(1920f, 1080f);
         scaler.matchWidthOrHeight = 0.5f;
 
-        // 글자가 배경색과 상관없이 잘 보이도록 반투명 어두운 판 위에 표시
-        var panel = new GameObject("ItemPanel", typeof(RectTransform), typeof(Image));
-        var panelRect = (RectTransform)panel.transform;
-        panelRect.SetParent(ui.transform, false);
-        panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = new Vector2(0f, 1f);
-        panelRect.anchoredPosition = new Vector2(32f, -28f);
-        panelRect.sizeDelta = new Vector2(330f, 84f);
-        panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.45f);
-
-        var textGo = new GameObject("ItemText", typeof(RectTransform));
-        var textRect = (RectTransform)textGo.transform;
-        textRect.SetParent(panelRect, false);
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(20f, 0f);
-        textRect.offsetMax = new Vector2(-20f, 0f);
-        var text = textGo.AddComponent<TextMeshProUGUI>();
-        text.text = "ITEM 0 / 3";
-        text.fontSize = 52f;
-        text.fontStyle = FontStyles.Bold;
-        text.color = Color.white;
-        text.alignment = TextAlignmentOptions.MidlineLeft;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
+        var scoreText = CreateCornerLabel(ui.transform, "Score", "SCORE 0", left: true);
+        var bestText = CreateCornerLabel(ui.transform, "Best", "BEST 0", left: false);
 
         // 결과 화면 (처음에는 숨김)
         var result = new GameObject("ResultPanel", typeof(RectTransform), typeof(Image));
@@ -207,12 +207,42 @@ public static class LevelBuilder
 
         var manager = ui.AddComponent<UIManager>();
         var so = new SerializedObject(manager);
-        so.FindProperty("itemText").objectReferenceValue = text;
+        so.FindProperty("scoreText").objectReferenceValue = scoreText;
+        so.FindProperty("bestText").objectReferenceValue = bestText;
         so.FindProperty("resultPanel").objectReferenceValue = result;
         so.FindProperty("resultText").objectReferenceValue = resultText;
         so.FindProperty("countdownText").objectReferenceValue = countdownText;
         so.ApplyModifiedPropertiesWithoutUndo();
         return manager;
+    }
+
+    /// <summary>화면 위쪽 모서리에 반투명 어두운 판 + 글자를 만든다 (글자가 배경과 상관없이 잘 보이게)</summary>
+    static TMP_Text CreateCornerLabel(Transform parent, string name, string initial, bool left)
+    {
+        var anchor = new Vector2(left ? 0f : 1f, 1f);
+        var panel = new GameObject($"{name}Panel", typeof(RectTransform), typeof(Image));
+        var panelRect = (RectTransform)panel.transform;
+        panelRect.SetParent(parent, false);
+        panelRect.anchorMin = panelRect.anchorMax = panelRect.pivot = anchor;
+        panelRect.anchoredPosition = new Vector2(left ? 32f : -32f, -28f);
+        panelRect.sizeDelta = new Vector2(380f, 84f);
+        panel.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.45f);
+
+        var textGo = new GameObject($"{name}Text", typeof(RectTransform));
+        var textRect = (RectTransform)textGo.transform;
+        textRect.SetParent(panelRect, false);
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = new Vector2(20f, 0f);
+        textRect.offsetMax = new Vector2(-20f, 0f);
+        var text = textGo.AddComponent<TextMeshProUGUI>();
+        text.text = initial;
+        text.fontSize = 52f;
+        text.fontStyle = FontStyles.Bold;
+        text.color = Color.white;
+        text.alignment = left ? TextAlignmentOptions.MidlineLeft : TextAlignmentOptions.MidlineRight;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        return text;
     }
 
     /// <summary>게임 카메라 시점에 UI를 함께 찍는다. 확인용이며 씬은 저장하지 않는다.</summary>
@@ -241,6 +271,23 @@ public static class LevelBuilder
         ui.HideResult();
     }
 
+    /// <summary>코인을 잠시 만들어 확대해서 찍는다. 확인용이며 씬에는 남기지 않는다.</summary>
+    static void CaptureCoin(string file, bool expired)
+    {
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ItemBuilder.PrefabPath);
+        var coin = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        coin.transform.position = new Vector3(0.5f, ItemBuilder.FloatHeight, 0.5f);
+        if (expired)
+        {
+            var mat = new SerializedObject(coin.GetComponent<Item>()).FindProperty("expiredMaterial").objectReferenceValue as Material;
+            foreach (var r in coin.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mat;
+        }
+        var p = coin.transform.position;
+        var camPos = p + new Vector3(0.25f, 0.2f, -0.9f);
+        PreviewCapture.Capture(file, camPos, Quaternion.LookRotation(p - camPos), 35f, 480, 480);
+        UnityEngine.Object.DestroyImmediate(coin);
+    }
+
     static Vector3 CellToWorld(int x, int z, int columns, int rows)
     {
         // 맵 중심이 원점이 되도록 배치, 타일 윗면 = y 0
@@ -261,6 +308,12 @@ public static class LevelBuilder
         mesh.transform.localPosition = collider.center;
         mesh.transform.localScale = collider.size;
         mesh.GetComponent<MeshRenderer>().sharedMaterial = material;
+
+        // 7단계: 흔들림·떨어짐·다시 생김
+        var tile = root.AddComponent<Tile>();
+        var so = new SerializedObject(tile);
+        so.FindProperty("visual").objectReferenceValue = mesh.transform;
+        so.ApplyModifiedPropertiesWithoutUndo();
 
         Directory.CreateDirectory(Path.GetDirectoryName(TilePrefabPath));
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, TilePrefabPath);
@@ -321,16 +374,13 @@ public static class LevelBuilder
                 Close("char-back.png", new Vector3(-0.8f, 0.9f, 1.9f));
                 Close("char-side.png", new Vector3(2.1f, 0.6f, 0f));
 
-                // 금화 확대
-                var coin = GameObject.Find("Item_1").transform.position;
-                var coinCam = coin + new Vector3(0.25f, 0.2f, -0.9f);
-                PreviewCapture.Capture(Path.Combine(dir, "item-close.png"), coinCam,
-                    Quaternion.LookRotation(coin - coinCam), 35f, 480, 480);
+                // 코인 확대 (금색 / 점수 시간이 지난 회색) — 확인용으로 잠시 만들었다가 지움
+                CaptureCoin(Path.Combine(dir, "coin-gold.png"), expired: false);
+                CaptureCoin(Path.Combine(dir, "coin-expired.png"), expired: true);
 
                 // UI 포함 화면 (Overlay UI는 카메라에 찍히지 않으므로 잠시 카메라 모드로 바꿔 찍음)
                 CaptureWithUI(Path.Combine(dir, "ui-playing.png"), null);
                 CaptureWithUI(Path.Combine(dir, "ui-gameover.png"), GameState.GameOver);
-                CaptureWithUI(Path.Combine(dir, "ui-clear.png"), GameState.Clear);
 
                 // 애니메이션 자세
                 AnimationBuilder.CapturePoses(dir);

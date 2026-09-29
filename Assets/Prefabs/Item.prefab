@@ -156,10 +156,17 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c93657ccc21785148ac3ad19d83c844e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Item
+  m_EditorClassIdentifier: Game::Item
   visual: {fileID: 4012676080398630379}
   spinSpeed: 120
   bobHeight: 0.08
   bobSpeed: 2
+  points: 100
+  scoringTime: 2
+  lifetime: 3
+  expiredMaterial: {fileID: 2100000, guid: 1f4b02f21ed261848afadadf34d9c046, type: 2}
+  blinkInterval: 0.1
   collectTime: 0.3
   collectRise: 0.4
+  dropGravity: 20
+  dropTime: 0.8

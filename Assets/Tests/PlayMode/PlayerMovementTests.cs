@@ -77,6 +77,7 @@ public class PlayerMovementTests : PlayModeTestBase
     [UnityTest]
     public IEnumerator WalkingIntoHole_Falls()
     {
+        yield return MakeHole(1, 2); // 7단계: 고정 구멍이 없으므로 테스트가 직접 만든다
         Teleport(new Vector3(-0.5f, 0f, -0.5f)); // 타일 (1,1), 바로 위(+Z)가 구멍 (1,2)
         yield return new WaitForSeconds(0.3f);
         Assert.AreEqual(0f, player.transform.position.y, 0.05f);
@@ -89,6 +90,7 @@ public class PlayerMovementTests : PlayModeTestBase
     [UnityTest]
     public IEnumerator JumpingOverHole_Lands()
     {
+        yield return MakeHole(1, 2);
         Teleport(new Vector3(-0.5f, 0f, -0.5f)); // 타일 (1,1) → 구멍 (1,2) 건너 타일 (1,3)
         yield return new WaitForSeconds(0.3f);
 

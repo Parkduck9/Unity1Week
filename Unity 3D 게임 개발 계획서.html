@@ -204,11 +204,13 @@
         </ul>
       </div></li>
       <li class="card step"><div class="num" style="background:var(--muted)">7</div><div>
-        <h3>시스템 변경: 점수 + 움직이는 구멍 <small style="color:var(--muted);font-weight:400">(설계 확정, 구현 전)</small></h3>
+        <h3>시스템 변경: 점수 + 움직이는 구멍 <small style="color:var(--muted);font-weight:400">(구현 완료, 직접 플레이 확인 대기)</small></h3>
         <ul>
           <li><b>게임 규칙</b>: CLEAR 없음, 떨어질 때까지 점수 경쟁. 시작하면 16칸이 모두 막혀 있음</li>
           <li><b>땅</b>: 주기마다 한 칸을 무작위로 골라(캐릭터 발밑 포함) 1초 흔들린 뒤 떨어짐. 구멍 수가 최대치를 넘으면 가장 오래된 구멍이 아래에서 올라와 다시 생김</li>
-          <li><b>난이도</b>: 1분에 걸쳐 주기 3초 → 1초, 최대 구멍 수 1개 → 15개</li>
+          <li><b>난이도</b>: 1분에 걸쳐 주기 3초 → 1초, 최대 구멍 수 1개 → 14개</li>
+          <li><b>살아남기 규칙</b>: 캐릭터 주변 8칸(상하좌우·대각선) 중 최소 1칸은 항상 남김. 어기는 칸이 뽑히면 다른 칸을 고름 → 점프로 버틸 수 있음</li>
+          <li><b>코인과 떨어지는 칸</b>: 칸 위의 코인은 함께 떨어져 사라짐</li>
           <li><b>코인</b>: 1.5초마다 빈 칸에 생성(여러 개 동시), 수명 3초 — 0~2초 금색 100점, 2~3초 회색·깜빡임 0점</li>
           <li><b>점수</b>: 코인 1개 = 100점, 왼쪽 위 <code>SCORE</code> / 최고 점수는 PlayerPrefs 저장, 오른쪽 위 <code>BEST</code></li>
           <li><b>새 스크립트</b>: <code>Tile</code>, <code>HoleManager</code>, <code>CoinSpawner</code> / <b>수정</b>: <code>Item</code>, <code>GameManager</code>, <code>UIManager</code>, <code>LevelBuilder</code></li>
@@ -222,7 +224,7 @@
               <tr><td>15초</td><td>2.5초</td><td>4개</td></tr>
               <tr><td>30초</td><td>2초</td><td>8개</td></tr>
               <tr><td>45초</td><td>1.5초</td><td>11개</td></tr>
-              <tr><td>60초 이후</td><td>1초</td><td>15개 (발판 1칸)</td></tr>
+              <tr><td>60초 이후</td><td>1초</td><td>14개 (발판 2칸)</td></tr>
             </tbody>
           </table>
         </div>
@@ -374,9 +376,11 @@
         <tbody>
           <tr><td>게임 목표</td><td>코인 3개 모으면 CLEAR</td><td>CLEAR 없음, 떨어질 때까지 점수 경쟁</td><td>사용자 선택</td></tr>
           <tr><td>맵</td><td>가운데 대각선 2칸 고정 구멍</td><td>16칸 모두 막고 구멍이 계속 바뀜 (흔들림 1초 → 떨어짐, 가장 오래된 구멍 다시 생김)</td><td>사용자 요청 3·4·5, 떨어짐 스크립트 연출(1순위), 다시 생김 아래에서 올라옴(1순위)</td></tr>
-          <tr><td>구멍 수</td><td>2개 고정</td><td>1개 → 15개 (1분에 걸쳐)</td><td>사용자 선택</td></tr>
+          <tr><td>구멍 수</td><td>2개 고정</td><td>1개 → 14개 (1분에 걸쳐)</td><td>사용자 선택 (처음 15개 → 14개로 변경)</td></tr>
           <tr><td>구멍 주기</td><td>없음</td><td>3초 → 1초 (1분에 걸쳐)</td><td>사용자 선택</td></tr>
           <tr><td>캐릭터 발밑</td><td>(해당 없음)</td><td>서 있는 칸도 떨어질 수 있음</td><td>사용자 선택</td></tr>
+          <tr><td>살아남기 규칙</td><td>(해당 없음)</td><td>캐릭터 주변 8칸 중 최소 1칸은 항상 남김, 어기면 다른 칸 선택</td><td>사용자 요청: 점프로 버틸 수 있게</td></tr>
+          <tr><td>코인과 떨어지는 칸</td><td>(해당 없음)</td><td>코인도 함께 떨어져 사라짐</td><td>사용자 선택</td></tr>
           <tr><td>코인</td><td>고정 3개</td><td>1.5초마다 생성, 여러 개 동시, 수명 3초 (2초 뒤 회색·깜빡임, 0점)</td><td>사용자 요청 1, 생성 B-1 2위, 모습 B-2 1위</td></tr>
           <tr><td>점수</td><td>없음 (<code>ITEM 0 / 3</code>)</td><td>코인 1개 = 100점, <code>SCORE</code> 표시</td><td>사용자 요청 0, 1순위</td></tr>
           <tr><td>최고 점수</td><td>없음</td><td>PlayerPrefs 저장, <code>BEST</code> 표시</td><td>사용자 요청 2, 1순위</td></tr>

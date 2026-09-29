@@ -3,38 +3,42 @@ using UnityEngine;
 
 /// <summary>
 /// 화면 UI 표시 담당. 값은 GameManager가 알려준다.
-/// - 4단계: 아이템 개수 (ITEM 0 / 3)
-/// - 5단계: 결과 문구 (GAME OVER / CLEAR) + 화면 어둡게
-/// - 6단계: 재시작 카운트다운 (결과 문구 아래 숫자, 바뀔 때마다 커졌다 작아짐)
+/// - 7단계: 왼쪽 위 SCORE, 오른쪽 위 BEST
+/// - 결과 문구 (GAME OVER) + 화면 어둡게
+/// - 재시작 카운트다운 (결과 문구 아래 숫자, 바뀔 때마다 커졌다 작아짐)
 /// </summary>
 public class UIManager : MonoBehaviour
 {
-    [SerializeField] TMP_Text itemText;
+    [SerializeField] TMP_Text scoreText;
+    [SerializeField] TMP_Text bestText;
 
     [Header("결과")]
     [SerializeField] GameObject resultPanel;
     [SerializeField] TMP_Text resultText;
     [SerializeField] Color gameOverColor = new Color(1f, 0.32f, 0.32f);
-    [SerializeField] Color clearColor = new Color(1f, 0.82f, 0.30f);
 
     [Header("카운트다운")]
     [SerializeField] TMP_Text countdownText;
-    [SerializeField] float popScale = 1.5f;     // 숫자가 바뀔 때 커지는 배율
-    [SerializeField] float popTime = 0.3f;      // 원래 크기로 돌아오는 시간
+    [SerializeField] float popScale = 1.5f;
+    [SerializeField] float popTime = 0.3f;
 
     float popTimer = -1f;
 
-    public void SetItemCount(int collected, int total)
+    public void SetScore(int score)
     {
-        if (itemText != null) itemText.text = $"ITEM {collected} / {total}";
+        if (scoreText != null) scoreText.text = $"SCORE {score}";
+    }
+
+    public void SetBest(int best)
+    {
+        if (bestText != null) bestText.text = $"BEST {best}";
     }
 
     public void ShowResult(GameState result)
     {
         if (resultPanel == null || resultText == null) return;
-        var clear = result == GameState.Clear;
-        resultText.text = clear ? "CLEAR" : "GAME OVER";
-        resultText.color = clear ? clearColor : gameOverColor;
+        resultText.text = "GAME OVER";
+        resultText.color = gameOverColor;
         if (countdownText != null) countdownText.gameObject.SetActive(false);
         resultPanel.SetActive(true);
     }

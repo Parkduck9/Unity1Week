@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 616476736028587054}
   - component: {fileID: 5110743357886429971}
+  - component: {fileID: 5516997470693545380}
   m_Layer: 0
   m_Name: Tile
   m_TagString: Untagged
@@ -54,6 +55,26 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 0.5, z: 1}
   m_Center: {x: 0, y: -0.25, z: 0}
+--- !u!114 &5516997470693545380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274512476231164421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 265e734d4e001f74891ca7fabf3f87be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game::Tile
+  visual: {fileID: 5519814927086121357}
+  cell: {x: 0, y: 0}
+  shakeAmplitude: 0.04
+  shakeFrequency: 35
+  fallGravity: 20
+  fallTime: 0.8
+  riseTime: 0.3
+  riseDepth: 1.5
 --- !u!1 &7540301015934417196
 GameObject:
   m_ObjectHideFlags: 0

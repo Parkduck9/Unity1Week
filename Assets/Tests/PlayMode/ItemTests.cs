@@ -6,100 +6,104 @@ using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 
 /// <summary>
-/// 4단계 확인: 금화 배치, 회전·떠다니기, 획득, ITEM 개수 UI.
+/// 7단계 코인 확인: 생성(1.5초마다, 여러 개), 수명 3초, 2초 안에 먹으면 100점, 2초 뒤 회색·깜빡임 0점,
+/// 떨어지는 칸 위의 코인은 함께 떨어짐.
 /// </summary>
 public class ItemTests : PlayModeTestBase
 {
-    // 배치 B안: (1,1), (2,2), (3,3) 칸, 바닥에서 0.5 위
-    static readonly Vector3[] ItemPositions =
+    static Transform CoinsRoot => GameObject.Find("Level/Coins").transform;
+    static TMP_Text ScoreText => GameObject.Find("ScoreText").GetComponent<TMP_Text>();
+
+    [UnityTest]
+    public IEnumerator NoCoinsAtStart_ThenSpawnEveryInterval_Several()
     {
-        new Vector3(-0.5f, 0.5f, -0.5f),
-        new Vector3(0.5f, 0.5f, 0.5f),
-        new Vector3(1.5f, 0.5f, 1.5f),
-    };
+        Assert.AreEqual(0, CoinsRoot.childCount, "처음에는 코인이 없어야 합니다.");
+        coinSpawner.enabled = true;
 
-    TMP_Text itemText;
+        yield return new WaitForSeconds(1.7f);
+        Assert.AreEqual(1, CoinsRoot.childCount, "1.5초 뒤 코인이 하나 생겨야 합니다.");
 
-    [UnitySetUp]
-    public IEnumerator FindUI()
-    {
-        var textGo = GameObject.Find("ItemText");
-        Assert.IsNotNull(textGo, "ItemText UI가 있어야 합니다.");
-        itemText = textGo.GetComponent<TMP_Text>();
-        yield break;
-    }
-
-    // 테스트 어셈블리는 게임 스크립트(Item)를 직접 참조할 수 없어서 오브젝트 이름으로 찾는다
-    static Transform ItemsRoot => GameObject.Find("Level/Items")?.transform;
-    static int ItemCount => ItemsRoot != null ? ItemsRoot.childCount : 0;
-
-    Transform FindItemAt(Vector3 position)
-    {
-        foreach (Transform item in ItemsRoot)
-            if (Vector3.Distance(item.position, position) < 0.05f) return item;
-        return null;
+        yield return new WaitForSeconds(1.5f);
+        Assert.GreaterOrEqual(CoinsRoot.childCount, 2, "코인이 여러 개 동시에 있을 수 있어야 합니다.");
     }
 
     [UnityTest]
-    public IEnumerator ThreeItems_AtPlannedPositions_AndUIShowsZero()
+    public IEnumerator SpawnedCoin_OnNormalTile_NotPlayerTile()
     {
-        Assert.AreEqual(3, ItemCount, "아이템은 3개여야 합니다.");
-        foreach (var p in ItemPositions)
-            Assert.IsNotNull(FindItemAt(p), $"{p} 위치에 아이템이 있어야 합니다.");
-        Assert.AreEqual("ITEM 0 / 3", itemText.text);
-        yield break;
-    }
-
-    [UnityTest]
-    public IEnumerator Item_SpinsAndBobs()
-    {
-        var coin = FindItemAt(ItemPositions[0]).Find("Coin");
-        var rot0 = coin.localRotation;
-        float minY = 10f, maxY = -10f;
-        for (var t = 0f; t < 2f; t += Time.deltaTime)
+        for (var i = 0; i < 10; i++)
         {
-            minY = Mathf.Min(minY, coin.localPosition.y);
-            maxY = Mathf.Max(maxY, coin.localPosition.y);
+            var coin = coinSpawner.TrySpawn();
+            Assert.IsNotNull(coin);
+            var p = coin.transform.position;
+            Assert.AreEqual(0.5f, p.y, 0.01f, "코인은 바닥에서 0.5 높이에 생겨야 합니다.");
+            Assert.IsFalse(Mathf.Approximately(p.x, -1.5f) && Mathf.Approximately(p.z, -1.5f), "캐릭터가 서 있는 칸에는 생기면 안 됩니다.");
+        }
+        yield break;
+    }
+
+    [UnityTest]
+    public IEnumerator CollectWithinTwoSeconds_Gives100()
+    {
+        Assert.AreEqual("SCORE 0", ScoreText.text);
+        coinSpawner.SpawnAt(TileAt(1, 0)); // 시작 칸 (0,0)의 오른쪽
+        yield return Hold(0.4f, Key.D);
+        Assert.AreEqual("SCORE 100", ScoreText.text, "2초 안에 먹으면 100점이어야 합니다.");
+    }
+
+    [UnityTest]
+    public IEnumerator AfterTwoSeconds_GrayAndBlinking_GivesZero()
+    {
+        var coin = coinSpawner.SpawnAt(TileAt(2, 0));
+        var renderer = coin.GetComponentInChildren<Renderer>();
+        var gold = renderer.sharedMaterial;
+
+        yield return new WaitForSeconds(1.8f);
+        Assert.IsFalse(coin.IsExpired);
+        Assert.AreEqual(gold, renderer.sharedMaterial, "2초 전에는 금색이어야 합니다.");
+
+        yield return new WaitForSeconds(0.3f);
+        Assert.IsTrue(coin.IsExpired, "2초가 지나면 점수 시간이 끝나야 합니다.");
+        Assert.AreNotEqual(gold, renderer.sharedMaterial, "2초가 지나면 회색으로 바뀌어야 합니다.");
+
+        bool sawOn = false, sawOff = false;
+        for (var t = 0f; t < 0.4f; t += Time.deltaTime)
+        {
+            sawOn |= renderer.enabled;
+            sawOff |= !renderer.enabled;
             yield return null;
         }
-        Assert.Greater(Quaternion.Angle(rot0, coin.localRotation), 1f, "금화가 회전해야 합니다.");
-        Assert.Greater(maxY - minY, 0.1f, "금화가 위아래로 떠다녀야 합니다.");
+        Assert.IsTrue(sawOn && sawOff, "2초가 지나면 깜빡여야 합니다.");
+
+        Teleport(CellPosition(2, 0));
+        yield return new WaitForSeconds(0.15f);
+        Assert.IsTrue(coin == null || coin.IsCollected, "늦게라도 먹을 수는 있어야 합니다.");
+        Assert.AreEqual("SCORE 0", ScoreText.text, "2초가 지난 뒤 먹으면 0점이어야 합니다.");
     }
 
     [UnityTest]
-    public IEnumerator WalkingIntoItem_CollectsIt_AndUpdatesUI()
+    public IEnumerator CoinDisappearsAfterThreeSeconds()
     {
-        var item = FindItemAt(ItemPositions[0]).gameObject;
-        yield return Hold(0.5f, Key.W, Key.D); // 시작 위치에서 대각선으로 걸어 (1,1) 칸의 금화를 지나감
-
-        Assert.AreEqual("ITEM 1 / 3", itemText.text, "금화를 먹으면 개수가 올라가야 합니다.");
+        var coin = coinSpawner.SpawnAt(TileAt(3, 3));
+        yield return new WaitForSeconds(2.8f);
+        Assert.IsTrue(coin != null, "3초 전에는 남아 있어야 합니다.");
         yield return new WaitForSeconds(0.4f);
-        Assert.IsTrue(item == null, "먹은 금화는 연출 후 사라져야 합니다.");
+        Assert.IsTrue(coin == null, "3초가 지나면 사라져야 합니다.");
     }
 
     [UnityTest]
-    public IEnumerator CollectEffect_ShrinksAndRises()
+    public IEnumerator CoinOnFallingTile_FallsWithIt()
     {
-        var item = FindItemAt(ItemPositions[0]);
-        var coin = item.Find("Coin");
-        var y0 = coin.position.y;
-        Teleport(new Vector3(-0.5f, 0f, -0.5f));
-        yield return new WaitForSeconds(0.15f); // 연출 중간
-        Assert.IsFalse(item.GetComponent<Collider>().enabled, "먹으면 다시 먹히지 않도록 콜라이더가 꺼져야 합니다.");
-        Assert.Less(coin.localScale.x, 0.9f, "작아져야 합니다.");
-        Assert.Greater(coin.position.y, y0 + 0.05f, "떠올라야 합니다.");
-    }
+        coinSpawner.enabled = true; // 칸이 떨어지는 신호를 받으려면 켜져 있어야 함
+        var coin = coinSpawner.SpawnAt(TileAt(2, 1));
+        var y0 = coin.transform.position.y;
 
-    [UnityTest]
-    public IEnumerator CollectingAll_ShowsThreeOfThree()
-    {
-        foreach (var p in ItemPositions)
-        {
-            Teleport(new Vector3(p.x, 0f, p.z));
-            yield return new WaitForSeconds(0.2f);
-        }
-        Assert.AreEqual("ITEM 3 / 3", itemText.text);
-        yield return new WaitForSeconds(0.4f);
-        Assert.AreEqual(0, ItemCount, "모든 금화가 사라져야 합니다.");
+        TileAt(2, 1).Fall();
+        yield return new WaitForSeconds(0.3f);
+        Assert.IsTrue(coin.IsDropped, "칸이 떨어지면 코인도 함께 떨어져야 합니다.");
+        Assert.Less(coin.transform.position.y, y0 - 0.2f);
+
+        yield return new WaitForSeconds(0.7f);
+        Assert.IsTrue(coin == null, "떨어진 코인은 사라져야 합니다.");
+        Assert.AreEqual("SCORE 0", ScoreText.text);
     }
 }

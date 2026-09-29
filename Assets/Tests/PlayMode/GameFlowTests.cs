@@ -3,33 +3,33 @@ using NUnit.Framework;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 /// <summary>
-/// 5단계 확인: GAME OVER / CLEAR 판정, 결과 문구, 입력 막기, 떨어질 때 카메라.
-/// 테스트 어셈블리는 게임 스크립트를 직접 참조할 수 없어서 UI 오브젝트로 결과를 확인한다.
+/// 게임 흐름 확인 (7단계 기준): CLEAR 없이 떨어질 때까지 계속, GAME OVER, 입력 막기,
+/// 떨어질 때 카메라, 점수, 최고 점수 저장.
 /// </summary>
 public class GameFlowTests : PlayModeTestBase
 {
-    static readonly Vector3[] ItemPositions =
-    {
-        new Vector3(-0.5f, 0f, -0.5f),
-        new Vector3(0.5f, 0f, 0.5f),
-        new Vector3(1.5f, 0f, 1.5f),
-    };
-
     GameObject resultPanel;
     TMP_Text resultText;
+
+    static TMP_Text ScoreText => GameObject.Find("ScoreText").GetComponent<TMP_Text>();
+    static TMP_Text BestText => GameObject.Find("BestText").GetComponent<TMP_Text>();
 
     [UnitySetUp]
     public IEnumerator FindResultUI()
     {
-        // 처음에는 꺼져 있으므로 GameObject.Find 대신 부모에서 찾는다
-        var ui = GameObject.Find("UI");
-        Assert.IsNotNull(ui, "UI가 있어야 합니다.");
-        resultPanel = ui.transform.Find("ResultPanel").gameObject;
-        resultText = resultPanel.transform.Find("ResultText").GetComponent<TMP_Text>();
+        FindResultPanel();
         yield break;
+    }
+
+    void FindResultPanel()
+    {
+        // 처음에는 꺼져 있으므로 GameObject.Find 대신 부모에서 찾는다
+        resultPanel = GameObject.Find("UI").transform.Find("ResultPanel").gameObject;
+        resultText = resultPanel.transform.Find("ResultText").GetComponent<TMP_Text>();
     }
 
     IEnumerator WaitUntilResult(float timeout)
@@ -37,18 +37,28 @@ public class GameFlowTests : PlayModeTestBase
         for (var t = 0f; t < timeout && !resultPanel.activeSelf; t += Time.deltaTime) yield return null;
     }
 
-    IEnumerator AssertInputBlocked()
+    IEnumerator FallOffEdge()
     {
-        var before = player.transform.position;
-        yield return Hold(0.5f, Key.D, Key.W);
-        var after = player.transform.position;
-        Assert.Less(new Vector2(after.x - before.x, after.z - before.z).magnitude, 0.05f, "게임이 끝나면 입력이 막혀야 합니다.");
+        Press(Key.A); // 시작 위치 (0,0)은 왼쪽 끝 → 맵 밖
+        yield return WaitUntilResult(3f);
+        ReleaseAll();
+    }
+
+    /// <summary>캐릭터 오른쪽 칸에 코인을 만들고 걸어가서 먹은 뒤 제자리로 돌아온다</summary>
+    IEnumerator CollectOneCoin()
+    {
+        coinSpawner.SpawnAt(TileAt(1, 0));
+        yield return Hold(0.4f, Key.D);
+        Teleport(CellPosition(0, 0));
+        yield return new WaitForSeconds(0.2f);
     }
 
     [UnityTest]
-    public IEnumerator Start_NoResult()
+    public IEnumerator Start_NoResult_ScoreAndBestZero()
     {
         Assert.IsFalse(resultPanel.activeSelf, "시작할 때 결과 화면은 숨겨져 있어야 합니다.");
+        Assert.AreEqual("SCORE 0", ScoreText.text);
+        Assert.AreEqual("BEST 0", BestText.text);
         yield return Hold(0.3f, Key.Space); // 점프해도 게임 오버가 되지 않아야 함
         yield return new WaitForSeconds(1f);
         Assert.IsFalse(resultPanel.activeSelf);
@@ -57,7 +67,7 @@ public class GameFlowTests : PlayModeTestBase
     [UnityTest]
     public IEnumerator FallingOffEdge_GameOver_CameraStaysAtMapHeight()
     {
-        Press(Key.A); // 시작 위치는 왼쪽 끝 → 맵 밖
+        Press(Key.A);
         var cameraMinY = float.MaxValue;
         for (var t = 0f; t < 2.5f && !resultPanel.activeSelf; t += Time.deltaTime)
         {
@@ -75,40 +85,51 @@ public class GameFlowTests : PlayModeTestBase
     [UnityTest]
     public IEnumerator FallingIntoHole_GameOver_AndInputBlocked()
     {
-        Teleport(new Vector3(1.5f, 0f, -0.5f)); // 타일 (3,1), 왼쪽(-X)이 구멍 (2,1)
-        yield return new WaitForSeconds(0.2f);
-        yield return Hold(0.35f, Key.A);
+        yield return MakeHole(1, 0);
+        yield return Hold(0.35f, Key.D); // 오른쪽 구멍으로 걸어 들어감
         yield return WaitUntilResult(2f);
-
         Assert.IsTrue(resultPanel.activeSelf);
         Assert.AreEqual("GAME OVER", resultText.text);
-        yield return AssertInputBlocked();
+
+        var before = player.transform.position;
+        yield return Hold(0.5f, Key.D, Key.W);
+        var after = player.transform.position;
+        Assert.Less(new Vector2(after.x - before.x, after.z - before.z).magnitude, 0.05f, "게임이 끝나면 입력이 막혀야 합니다.");
     }
 
     [UnityTest]
-    public IEnumerator CollectingTwo_NotClearYet()
+    public IEnumerator CollectingManyCoins_NoClear_KeepsPlaying()
     {
-        Teleport(ItemPositions[0]);
-        yield return new WaitForSeconds(0.2f);
-        Teleport(ItemPositions[1]);
-        yield return new WaitForSeconds(0.5f);
-        Assert.IsFalse(resultPanel.activeSelf, "아이템을 다 모으기 전에는 CLEAR가 아니어야 합니다.");
+        for (var i = 0; i < 4; i++) yield return CollectOneCoin();
+        Assert.AreEqual("SCORE 400", ScoreText.text, "코인을 먹을 때마다 100점씩 올라야 합니다.");
+        Assert.IsFalse(resultPanel.activeSelf, "CLEAR 없이 계속 플레이해야 합니다.");
     }
 
     [UnityTest]
-    public IEnumerator CollectingAll_Clear_AndInputBlocked_Idle()
+    public IEnumerator BestScore_SavedOnGameOver()
     {
-        foreach (var p in ItemPositions)
-        {
-            Teleport(p);
-            yield return new WaitForSeconds(0.2f);
-        }
-        Assert.IsTrue(resultPanel.activeSelf, "아이템을 모두 모으면 결과 화면이 나와야 합니다.");
-        Assert.AreEqual("CLEAR", resultText.text);
+        yield return CollectOneCoin();
+        yield return FallOffEdge();
+        Assert.AreEqual(100, PlayerPrefs.GetInt(BestScoreKey, 0), "GAME OVER 때 최고 점수가 저장되어야 합니다.");
+        Assert.AreEqual("BEST 100", BestText.text);
+    }
 
-        yield return AssertInputBlocked();
-        var animator = player.GetComponentInChildren<Animator>();
-        Assert.IsTrue(animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"), "클리어 후 캐릭터는 그 자리에 멈춰 Idle이어야 합니다.");
-        Assert.AreEqual("CLEAR", resultText.text, "CLEAR 뒤에 다른 결과로 바뀌면 안 됩니다.");
+    [UnityTest]
+    public IEnumerator BestScore_ShownFromSave_AndNotLowered()
+    {
+        // 이전 실행에서 500점을 저장해 둔 상태로 다시 시작
+        PlayerPrefs.SetInt(BestScoreKey, 500);
+        SceneManager.LoadScene("Main");
+        yield return null;
+        FindSceneObjects();
+        StopSystems();
+        FindResultPanel();
+        yield return new WaitForSeconds(0.3f);
+        Assert.AreEqual("BEST 500", BestText.text, "저장된 최고 점수를 보여줘야 합니다.");
+
+        yield return CollectOneCoin();
+        yield return FallOffEdge();
+        Assert.AreEqual(500, PlayerPrefs.GetInt(BestScoreKey, 0), "더 낮은 점수로 최고 점수가 바뀌면 안 됩니다.");
+        Assert.AreEqual("BEST 500", BestText.text);
     }
 }
