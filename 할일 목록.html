@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unity 3D 할일 목록</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1f2328;
+    --muted: #5f6b7a;
+    --border: #e1e4e8;
+    --accent: #2f6fdf;
+    --accent-soft: #e8f0fd;
+    --ok: #1f8a4c;
+    --ok-soft: #e4f5ea;
+    --warn: #b7791f;
+    --warn-soft: #fcf3dc;
+    --track: #e9ecef;
+    --code: #f0f2f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --card: #1c2027;
+      --text: #e6e8eb;
+      --muted: #9aa4b1;
+      --border: #2d333c;
+      --accent: #6ea0ff;
+      --accent-soft: #1f2b44;
+      --ok: #5cc98a;
+      --ok-soft: #1a3226;
+      --warn: #e3b457;
+      --warn-soft: #3a3020;
+      --track: #2a2f37;
+      --code: #262b33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { margin: 0 0 6px; font-size: 28px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  header a { color: var(--accent); }
+
+  .summary {
+    margin-top: 20px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 20px;
+  }
+  .summary-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .summary-top b { font-size: 22px; }
+  .bar { height: 10px; background: var(--track); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+  .bar > span { display: block; height: 100%; background: var(--ok); border-radius: 999px; transition: width .3s; }
+
+  .overview { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 12px; }
+  .ov {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 8px; font-size: 14px;
+    background: var(--card); border: 1px solid var(--border); text-decoration: none; color: var(--text);
+  }
+  .badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .badge.wait { background: var(--track); color: var(--muted); }
+  .badge.doing { background: var(--warn-soft); color: var(--warn); }
+  .badge.done { background: var(--ok-soft); color: var(--ok); }
+
+  section.stage {
+    margin-top: 16px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px;
+  }
+  .stage-head { display: flex; align-items: center; gap: 12px; }
+  .num {
+    flex: none; width: 36px; height: 36px; border-radius: 10px;
+    background: var(--accent); color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stage.is-done .num { background: var(--ok); }
+  .stage-head h2 { margin: 0; font-size: 17px; flex: 1; }
+  .count { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .stage .bar { height: 6px; margin: 10px 0 6px; }
+
+  ul.items { list-style: none; margin: 0; padding: 0; }
+  ul.items li { border-top: 1px solid var(--border); }
+  ul.items li:first-child { border-top: none; }
+  label.item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 2px; cursor: pointer; }
+  label.item input { margin-top: 5px; width: 17px; height: 17px; accent-color: var(--ok); flex: none; cursor: pointer; }
+  label.item.checked span.text { color: var(--muted); text-decoration: line-through; }
+  label.item.locked { cursor: default; }
+  label.item.locked input { cursor: default; }
+  .who { margin-left: auto; font-size: 11px; color: var(--ok); white-space: nowrap; padding-top: 3px; }
+  code {
+    background: var(--code); padding: 1px 6px; border-radius: 4px;
+    font-family: Consolas, "D2Coding", monospace; font-size: 0.9em;
+  }
+  .foot { margin-top: 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+  button {
+    font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>할일 목록</h1>
+    <p>Unity 3D 복셀 게임 · 자세한 내용은 <a href="Unity 3D 게임 개발 계획서.html">개발 계획서</a> 참고</p>
+  </header>
+
+  <div class="summary">
+    <div class="summary-top">
+      <span>전체 진행률</span>
+      <b id="total-text">0%</b>
+    </div>
+    <div class="bar"><span id="total-bar" style="width:0%"></span></div>
+    <div class="overview" id="overview"></div>
+  </div>
+
+  <div id="stages"></div>
+
+  <div class="foot">
+    <span>✔ 표시가 붙은 항목은 Claude가 작업을 마치고 체크한 항목입니다. 나머지는 직접 클릭해서 체크할 수 있으며 이 브라우저에만 저장됩니다.</span>
+    <button id="reset" type="button">내 체크 초기화</button>
+  </div>
+</div>
+
+<script>
+  // 작업이 끝나면 해당 항목의 done 값을 true로 바꿉니다. (할일 목록.md와 함께 갱신)
+  const STAGES = [
+    { no: 0, title: "Unity 3D 프로젝트 생성", items: [
+      { id: "0-1", text: "Unity 6 LTS, URP 템플릿으로 프로젝트 생성", done: true },
+      { id: "0-2", text: "Input System 패키지 설치 및 설정", done: true },
+      { id: "0-3", text: "폴더 생성: <code>Scripts</code>, <code>Prefabs</code>, <code>Materials</code>, <code>Animations</code>, <code>Scenes</code>", done: true },
+      { id: "0-4", text: "메인 씬 생성 및 저장", done: true },
+    ]},
+    { no: 1, title: "3D 복셀 캐릭터 생성", items: [
+      { id: "1-1", text: "캐릭터용 머티리얼 만들기", done: false },
+      { id: "1-2", text: "Cube로 파츠 제작: 머리 / 몸 / 왼팔 / 오른팔 / 왼다리 / 오른다리", done: false },
+      { id: "1-3", text: "파츠 계층 구조 정리 (팔·다리 회전 기준점 설정)", done: false },
+      { id: "1-4", text: "캐릭터 프리팹 저장", done: false },
+    ]},
+    { no: 2, title: "4x4 타일맵 + 이동 / 점프 + 따라가는 카메라", items: [
+      { id: "2-1", text: "타일 프리팹 제작 (1 unit)", done: false },
+      { id: "2-2", text: "4x4 타일맵 배치 (16개)", done: false },
+      { id: "2-3", text: "캐릭터에 물리 컴포넌트 추가 (Rigidbody 또는 CharacterController)", done: false },
+      { id: "2-4", text: "<code>PlayerController</code>: WASD / 방향키 이동", done: false },
+      { id: "2-5", text: "<code>PlayerController</code>: Space 점프 + 바닥 체크", done: false },
+      { id: "2-6", text: "이동 방향으로 캐릭터 회전", done: false },
+      { id: "2-7", text: "<code>FollowCamera</code>: 플레이어 뒤쪽 위에서 부드럽게 따라가기", done: false },
+      { id: "2-8", text: "이동 / 점프 / 카메라 동작 테스트", done: false },
+    ]},
+    { no: 3, title: "Idle / Walk / Jump 애니메이션", items: [
+      { id: "3-1", text: "Idle 애니메이션 제작", done: false },
+      { id: "3-2", text: "Walk 애니메이션 제작 (팔·다리 교차 스윙)", done: false },
+      { id: "3-3", text: "Jump 애니메이션 제작 (팔 올리기, 다리 모으기)", done: false },
+      { id: "3-4", text: "Animator Controller 구성: Idle ↔ Walk, Any State → Jump", done: false },
+      { id: "3-5", text: "<code>PlayerController</code>에서 애니메이션 파라미터 전달", done: false },
+      { id: "3-6", text: "애니메이션 전환 테스트", done: false },
+    ]},
+    { no: 4, title: "아이템 추가", items: [
+      { id: "4-1", text: "아이템 모델 / 머티리얼 제작", done: false },
+      { id: "4-2", text: "<code>Item</code>: 회전 + 위아래로 떠다니는 연출", done: false },
+      { id: "4-3", text: "<code>Item</code>: Trigger Collider로 획득 처리", done: false },
+      { id: "4-4", text: "아이템 프리팹 저장 후 타일 위에 3개 배치", done: false },
+      { id: "4-5", text: "<code>UIManager</code>: <code>아이템 0 / 3</code> 표시", done: false },
+      { id: "4-6", text: "아이템 획득 및 UI 갱신 테스트", done: false },
+    ]},
+    { no: 5, title: "게임 종료 / 성공 판정 (GameManager)", items: [
+      { id: "5-1", text: "<code>GameManager</code>: 상태 정의 (Playing / GameOver / Clear)", done: false },
+      { id: "5-2", text: "실패 판정: 캐릭터 <code>y &lt; -5</code>", done: false },
+      { id: "5-3", text: "성공 판정: 아이템 3개 모두 획득", done: false },
+      { id: "5-4", text: "<code>GAME OVER</code> 문구 UI", done: false },
+      { id: "5-5", text: "<code>CLEAR</code> 문구 UI", done: false },
+      { id: "5-6", text: "게임 종료 시 플레이어 입력 막기", done: false },
+      { id: "5-7", text: "실패 / 성공 테스트", done: false },
+    ]},
+    { no: 6, title: "3초 후 재시작", items: [
+      { id: "6-1", text: "카운트다운 UI (3 → 2 → 1)", done: false },
+      { id: "6-2", text: "코루틴으로 3초 기다리기", done: false },
+      { id: "6-3", text: "<code>SceneManager.LoadScene</code>으로 현재 씬 다시 불러오기", done: false },
+      { id: "6-4", text: "재시작 후 상태 / 아이템 / UI 초기화 확인", done: false },
+    ]},
+    { no: "✓", title: "최종 확인", items: [
+      { id: "f-1", text: "처음부터 클리어까지 플레이 테스트", done: false },
+      { id: "f-2", text: "처음부터 게임 오버까지 플레이 테스트", done: false },
+      { id: "f-3", text: "콘솔 에러 / 경고 없음 확인", done: false },
+    ]},
+  ];
+
+  const KEY = "unity1week-todo-checks";
+  let mine = {};
+  try { mine = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { mine = {}; }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(mine)); } catch (e) {} }
+
+  const isChecked = it => it.done || !!mine[it.id];
+
+  function statusOf(stage) {
+    const n = stage.items.filter(isChecked).length;
+    if (n === 0) return { cls: "wait", label: "⬜ 대기", n };
+    if (n === stage.items.length) return { cls: "done", label: "✅ 완료", n };
+    return { cls: "doing", label: "🟨 진행 중", n };
+  }
+
+  function render() {
+    const stagesEl = document.getElementById("stages");
+    const ovEl = document.getElementById("overview");
+    stagesEl.innerHTML = "";
+    ovEl.innerHTML = "";
+    let all = 0, checked = 0;
+
+    STAGES.forEach((s, idx) => {
+      const st = statusOf(s);
+      all += s.items.length; checked += st.n;
+      const pct = Math.round(st.n / s.items.length * 100);
+      const anchor = "stage-" + idx;
+
+      const ov = document.createElement("a");
+      ov.className = "ov"; ov.href = "#" + anchor;
+      ov.innerHTML = `<span>${s.no}. ${s.title.split(" (")[0]}</span><span class="badge ${st.cls}">${st.label}</span>`;
+      ovEl.appendChild(ov);
+
+      const sec = document.createElement("section");
+      sec.className = "stage" + (st.cls === "done" ? " is-done" : "");
+      sec.id = anchor;
+      sec.innerHTML = `
+        <div class="stage-head">
+          <div class="num">${s.no}</div>
+          <h2>${s.title}</h2>
+          <span class="count">${st.n} / ${s.items.length}</span>
+        </div>
+        <div class="bar"><span style="width:${pct}%"></span></div>`;
+      const ul = document.createElement("ul");
+      ul.className = "items";
+      s.items.forEach(it => {
+        const li = document.createElement("li");
+        const on = isChecked(it);
+        li.innerHTML = `<label class="item${on ? " checked" : ""}${it.done ? " locked" : ""}">
+            <input type="checkbox" ${on ? "checked" : ""} ${it.done ? "disabled" : ""}>
+            <span class="text">${it.text}</span>
+            ${it.done ? '<span class="who">✔ 완료</span>' : ""}
+          </label>`;
+        if (!it.done) {
+          li.querySelector("input").addEventListener("change", e => {
+            if (e.target.checked) mine[it.id] = true; else delete mine[it.id];
+            save(); render();
+          });
+        }
+        ul.appendChild(li);
+      });
+      sec.appendChild(ul);
+      stagesEl.appendChild(sec);
+    });
+
+    const total = Math.round(checked / all * 100);
+    document.getElementById("total-text").textContent = `${total}% (${checked} / ${all})`;
+    document.getElementById("total-bar").style.width = total + "%";
+  }
+
+  document.getElementById("reset").addEventListener("click", () => { mine = {}; save(); render(); });
+  render();
+</script>
+</body>
+</html>

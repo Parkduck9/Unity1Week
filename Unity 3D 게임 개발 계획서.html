@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unity 3D 게임 개발 계획서</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1f2328;
+    --muted: #5f6b7a;
+    --border: #e1e4e8;
+    --accent: #2f6fdf;
+    --accent-soft: #e8f0fd;
+    --ok: #1f8a4c;
+    --ok-soft: #e4f5ea;
+    --bad: #c93434;
+    --bad-soft: #fbe7e7;
+    --code: #f0f2f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --card: #1c2027;
+      --text: #e6e8eb;
+      --muted: #9aa4b1;
+      --border: #2d333c;
+      --accent: #6ea0ff;
+      --accent-soft: #1f2b44;
+      --ok: #5cc98a;
+      --ok-soft: #1a3226;
+      --bad: #f07a7a;
+      --bad-soft: #3a1f22;
+      --code: #262b33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", "Malgun Gothic", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { margin: 0 0 6px; font-size: 28px; }
+  header p { margin: 0; color: var(--muted); }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .tag {
+    background: var(--accent-soft); color: var(--accent);
+    padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  }
+  section { margin-top: 32px; }
+  h2 { font-size: 20px; margin: 0 0 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 20px;
+  }
+  .goal { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .goal .card { border-left: 4px solid var(--ok); }
+  .goal .card.bad { border-left-color: var(--bad); }
+  .goal b { display: block; margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-size: 13px; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { white-space: nowrap; font-weight: 600; }
+  code {
+    background: var(--code); padding: 1px 6px; border-radius: 4px;
+    font-family: Consolas, "D2Coding", monospace; font-size: 0.92em;
+  }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .step { display: grid; grid-template-columns: 40px 1fr; gap: 14px; }
+  .num {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--accent); color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step h3 { margin: 0 0 6px; font-size: 16px; }
+  .step ul { margin: 0; padding-left: 18px; }
+  .step li { margin: 2px 0; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .state {
+    padding: 6px 14px; border-radius: 8px; font-weight: 700; font-size: 14px;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .state.ok { background: var(--ok-soft); color: var(--ok); }
+  .state.bad { background: var(--bad-soft); color: var(--bad); }
+  .arrow { color: var(--muted); }
+  .note { color: var(--muted); font-size: 14px; margin-top: 10px; }
+  @media (max-width: 600px) {
+    .goal { grid-template-columns: 1fr; }
+    td:first-child { white-space: normal; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Unity 3D 게임 개발 계획서</h1>
+    <p>3D 복셀 캐릭터 아이템 수집 게임</p>
+    <div class="tags">
+      <span class="tag">Unity 6 LTS</span>
+      <span class="tag">URP</span>
+      <span class="tag">Input System</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>게임 목표</h2>
+    <div class="goal">
+      <div class="card"><b>CLEAR</b>4x4 타일맵 위의 아이템 3개를 모두 모은다</div>
+      <div class="card bad"><b>GAME OVER</b>맵 밖으로 떨어진다 (<code>y &lt; -5</code>)</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>확정 사항</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>항목</th><th>결정</th></tr></thead>
+        <tbody>
+          <tr><td>카메라</td><td>플레이어를 따라가는 카메라</td></tr>
+          <tr><td>아이템</td><td>기본 3개</td></tr>
+          <tr><td>UI</td><td>아이템 개수, <code>GAME OVER</code> / <code>CLEAR</code> 문구, 재시작 카운트다운</td></tr>
+          <tr><td>입력</td><td>WASD / 방향키 이동, Space 점프</td></tr>
+          <tr><td>상태 관리</td><td>GameManager가 Playing / GameOver / Clear 상태 관리</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>개발 단계</h2>
+    <ol class="steps">
+      <li class="card step"><div class="num">0</div><div>
+        <h3>Unity 3D 프로젝트 생성</h3>
+        <ul>
+          <li>Unity 6 LTS, URP 템플릿</li>
+          <li>Input System 패키지 설정</li>
+          <li>폴더 구조: <code>Scripts</code> <code>Prefabs</code> <code>Materials</code> <code>Animations</code> <code>Scenes</code></li>
+        </ul>
+      </div></li>
+      <li class="card step"><div class="num">1</div><div>
+        <h3>3D 복셀 캐릭터 생성</h3>
+        <ul>
+          <li>Cube를 조합해 캐릭터 제작</li>
+          <li>파츠 분리: 머리 / 몸 / 왼팔 / 오른팔 / 왼다리 / 오른다리 (애니메이션용)</li>
+          <li>프리팹으로 저장</li>
+        </ul>
+      </div></li>
+      <li class="card step"><div class="num">2</div><div>
+        <h3>4x4 타일맵 + 이동 / 점프 + 따라가는 카메라</h3>
+        <ul>
+          <li>1 unit 크기 타일 16개로 4x4 맵 구성</li>
+          <li>캐릭터 이동(WASD / 방향키), 점프(Space)</li>
+          <li>이동 방향으로 캐릭터 회전</li>
+          <li>따라가는 카메라: 플레이어 뒤쪽 위에서 부드럽게 따라감</li>
+        </ul>
+      </div></li>
+      <li class="card step"><div class="num">3</div><div>
+        <h3>Idle / Walk / Jump 애니메이션</h3>
+        <ul>
+          <li>Animator Controller: Idle ↔ Walk, Any State → Jump</li>
+          <li>파츠 Transform 키프레임으로 제작</li>
+          <li>Walk: 팔·다리 교차 스윙 / Jump: 팔 올리기, 다리 모으기</li>
+        </ul>
+      </div></li>
+      <li class="card step"><div class="num">4</div><div>
+        <h3>아이템 추가</h3>
+        <ul>
+          <li>아이템 3개를 타일 위에 배치</li>
+          <li>회전 + 위아래로 떠다니는 연출</li>
+          <li>Trigger Collider로 획득 → 개수 증가</li>
+          <li>UI: <code>아이템 0 / 3</code></li>
+        </ul>
+      </div></li>
+      <li class="card step"><div class="num">5</div><div>
+        <h3>게임 종료 / 성공 판정 (GameManager)</h3>
+        <ul>
+          <li>실패: 캐릭터 <code>y &lt; -5</code> → <code>GAME OVER</code> 문구 표시</li>
+          <li>성공: 아이템 3개 모두 획득 → <code>CLEAR</code> 문구 표시</li>
+          <li>종료되면 플레이어 입력 막기</li>
+        </ul>
+      </div></li>
+      <li class="card step"><div class="num">6</div><div>
+        <h3>3초 후 재시작</h3>
+        <ul>
+          <li>종료 후 카운트다운 표시: 3 → 2 → 1</li>
+          <li>코루틴으로 기다린 뒤 <code>SceneManager.LoadScene</code>으로 현재 씬 다시 불러오기</li>
+        </ul>
+      </div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>게임 상태 흐름</h2>
+    <div class="card">
+      <div class="flow">
+        <span class="state">Playing</span>
+        <span class="arrow">→</span>
+        <span class="state ok">Clear</span>
+        <span class="arrow">/</span>
+        <span class="state bad">GameOver</span>
+        <span class="arrow">→</span>
+        <span class="state">카운트다운 3초</span>
+        <span class="arrow">→</span>
+        <span class="state">씬 재시작</span>
+      </div>
+      <p class="note">Clear 또는 GameOver가 되면 입력을 막고, 카운트다운이 끝나면 Playing부터 다시 시작합니다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>스크립트 구성 (예정)</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>스크립트</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>PlayerController</code></td><td>이동, 점프, 애니메이션 파라미터 전달</td></tr>
+          <tr><td><code>FollowCamera</code></td><td>플레이어 따라가기</td></tr>
+          <tr><td><code>Item</code></td><td>회전 연출, 획득 처리</td></tr>
+          <tr><td><code>GameManager</code></td><td>상태 관리, 승패 판정, 재시작</td></tr>
+          <tr><td><code>UIManager</code></td><td>아이템 개수, 결과 문구, 카운트다운 표시</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+</body>
+</html>
