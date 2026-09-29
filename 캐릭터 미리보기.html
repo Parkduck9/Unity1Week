@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>캐릭터 미리보기</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1f2328;
+    --muted: #5f6b7a;
+    --border: #e1e4e8;
+    --accent: #2f6fdf;
+    --accent-soft: #e8f0fd;
+    --viewer: #d1dbea;
+    --code: #f0f2f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --card: #1c2027;
+      --text: #e6e8eb;
+      --muted: #9aa4b1;
+      --border: #2d333c;
+      --accent: #6ea0ff;
+      --accent-soft: #1f2b44;
+      --viewer: #232a35;
+      --code: #262b33;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Pretendard", "Malgun Gothic", system-ui, sans-serif; line-height: 1.6;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { margin: 0 0 6px; font-size: 28px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  header a { color: var(--accent); }
+
+  .viewer-card {
+    margin-top: 20px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
+  }
+  #viewer { position: relative; width: 100%; height: 480px; background: var(--viewer); touch-action: none; cursor: grab; }
+  #viewer:active { cursor: grabbing; }
+  #viewer canvas { display: block; width: 100%; height: 100%; }
+  .hint {
+    position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: var(--muted);
+    background: color-mix(in srgb, var(--card) 80%, transparent); padding: 2px 8px; border-radius: 6px;
+    pointer-events: none;
+  }
+  #error { display: none; padding: 40px 20px; text-align: center; color: var(--muted); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--border); }
+  .group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .group > span { font-size: 13px; color: var(--muted); margin-right: 2px; }
+  button {
+    font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); color: var(--accent); }
+  label.toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+  label.toggle input { accent-color: var(--accent); }
+
+  section { margin-top: 28px; }
+  h2 { font-size: 20px; margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat small { color: var(--muted); font-size: 12px; }
+  .stat b { display: block; font-size: 18px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 4px 16px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--muted); font-size: 12px; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  tr.part-row { cursor: default; }
+  tr.part-row:hover { background: var(--accent-soft); }
+  td.indent { padding-left: 26px; color: var(--muted); }
+  .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; border: 1px solid var(--border); }
+  code { background: var(--code); padding: 1px 6px; border-radius: 4px; font-family: Consolas, "D2Coding", monospace; font-size: 0.9em; }
+  pre {
+    margin: 0; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    font-family: Consolas, "D2Coding", monospace; font-size: 13px; line-height: 1.5; overflow-x: auto;
+  }
+  .note { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  @media (max-width: 600px) { #viewer { height: 360px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>캐릭터 미리보기</h1>
+    <p>1단계 복셀 캐릭터 · <code>Assets/Prefabs/VoxelCharacter.prefab</code> · <a href="할일 목록.html">할일 목록</a> · <a href="Unity 3D 게임 개발 계획서.html">계획서</a></p>
+  </header>
+
+  <div class="viewer-card">
+    <div id="viewer">
+      <div id="error">3D 뷰어를 불러오지 못했어요. 인터넷 연결을 확인해 주세요. (three.js를 CDN에서 불러옵니다)</div>
+      <div class="hint">드래그: 회전 · 휠/핀치: 확대 · 파츠 표에 마우스를 올리면 강조</div>
+    </div>
+    <div class="controls">
+      <div class="group">
+        <span>시점</span>
+        <button type="button" data-view="front">앞</button>
+        <button type="button" data-view="back">뒤</button>
+        <button type="button" data-view="side">옆</button>
+        <button type="button" data-view="diag">대각선</button>
+        <button type="button" data-view="game">게임 카메라</button>
+      </div>
+      <div class="group">
+        <label class="toggle"><input type="checkbox" id="opt-pivots" checked> 관절 피벗</label>
+        <label class="toggle"><input type="checkbox" id="opt-swing"> 관절 흔들기</label>
+        <label class="toggle"><input type="checkbox" id="opt-tile" checked> 타일 1칸</label>
+        <label class="toggle"><input type="checkbox" id="opt-spin"> 자동 회전</label>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>요약</h2>
+    <div class="grid">
+      <div class="stat"><small>키</small><b>1.08 unit</b></div>
+      <div class="stat"><small>복셀 1칸</small><b>0.1 unit</b></div>
+      <div class="stat"><small>큐브 수</small><b>14개</b></div>
+      <div class="stat"><small>앞 방향</small><b>+Z</b></div>
+      <div class="stat"><small>콜라이더</small><b>캡슐 1개</b></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>파츠 구성</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>파츠</th><th>피벗 위치 (x, y, z)</th><th>크기 (x × y × z)</th><th>머티리얼</th></tr></thead>
+        <tbody id="parts"></tbody>
+      </table>
+    </div>
+    <p class="note">좌표는 Unity 기준입니다 (단위: unit, 발바닥 = y 0). 캐릭터의 왼쪽은 -X입니다.</p>
+  </section>
+
+  <section>
+    <h2>계층 구조</h2>
+<pre>VoxelCharacter        Rigidbody · CapsuleCollider · PlayerController
+└─ Model              3단계 Animator 위치
+   ├─ Body            몸통
+   ├─ Head            목 피벗 → 얼굴, Hair_Top, Hair_Back, Eye_L, Eye_R
+   ├─ Arm_L / Arm_R   어깨 피벗 → 팔, Sleeve
+   └─ Leg_L / Leg_R   엉덩이 피벗 → 다리, Shoe</pre>
+    <p class="note">이 페이지의 치수와 색은 <code>Assets/Editor/VoxelCharacterBuilder.cs</code>와 같습니다. 스크립트 값을 바꾸면 이 페이지의 <code>PARTS</code> 데이터도 함께 고쳐야 합니다.</p>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  // ===== VoxelCharacterBuilder.cs와 같은 데이터 (Unity 좌표) =====
+  const COLORS = {
+    Skin:  [1.00, 0.80, 0.62],
+    Shirt: [0.25, 0.50, 0.90],
+    Pants: [0.20, 0.22, 0.35],
+    Shoe:  [0.15, 0.15, 0.17],
+    Hair:  [0.35, 0.22, 0.12],
+    Eye:   [0.08, 0.08, 0.10],
+  };
+  const HIP = 0.35, SHOULDER = 0.70;
+  const PARTS = [
+    { name: "Body", pivot: [0, HIP, 0], cubes: [
+      { name: "Mesh", pos: [0, 0.175, 0], size: [0.40, 0.35, 0.20], mat: "Shirt" } ] },
+    { name: "Head", pivot: [0, SHOULDER, 0], joint: "목", cubes: [
+      { name: "Mesh", pos: [0, 0.175, 0], size: [0.35, 0.35, 0.35], mat: "Skin" },
+      { name: "Hair_Top", pos: [0, 0.34, 0], size: [0.37, 0.08, 0.37], mat: "Hair" },
+      { name: "Hair_Back", pos: [0, 0.25, -0.16], size: [0.37, 0.20, 0.06], mat: "Hair" },
+      { name: "Eye_L", pos: [-0.08, 0.19, 0.18], size: [0.06, 0.08, 0.02], mat: "Eye" },
+      { name: "Eye_R", pos: [0.08, 0.19, 0.18], size: [0.06, 0.08, 0.02], mat: "Eye" } ] },
+    ...[["Arm_L", -1], ["Arm_R", 1]].map(([name, side]) => ({
+      name, pivot: [0.275 * side, SHOULDER, 0], joint: "어깨", cubes: [
+        { name: "Mesh", pos: [0, -0.175, 0], size: [0.15, 0.35, 0.15], mat: "Skin" },
+        { name: "Sleeve", pos: [0, -0.06, 0], size: [0.16, 0.12, 0.16], mat: "Shirt" } ] })),
+    ...[["Leg_L", -1], ["Leg_R", 1]].map(([name, side]) => ({
+      name, pivot: [0.10 * side, HIP, 0], joint: "엉덩이", cubes: [
+        { name: "Mesh", pos: [0, -0.175, 0], size: [0.20, 0.35, 0.20], mat: "Pants" },
+        { name: "Shoe", pos: [0, -0.31, 0.01], size: [0.21, 0.08, 0.22], mat: "Shoe" } ] })),
+  ];
+
+  // ===== 파츠 표 =====
+  const fmt = v => v.map(n => n.toFixed(3).replace(/\.?0+$/, "") || "0").join(", ");
+  const rgbCss = c => `rgb(${c.map(n => Math.round(n * 255)).join(",")})`;
+  const tbody = document.getElementById("parts");
+  PARTS.forEach(p => {
+    const tr = document.createElement("tr");
+    tr.className = "part-row"; tr.dataset.part = p.name;
+    tr.innerHTML = `<td><b>${p.name}</b>${p.joint ? ` <small style="color:var(--muted)">(${p.joint} 피벗)</small>` : ""}</td><td>${fmt(p.pivot)}</td><td></td><td></td>`;
+    tbody.appendChild(tr);
+    p.cubes.forEach(c => {
+      const r = document.createElement("tr");
+      r.className = "part-row"; r.dataset.part = p.name; r.dataset.cube = c.name;
+      r.innerHTML = `<td class="indent">${c.name}</td><td>${fmt(c.pos)} <small style="color:var(--muted)">(로컬)</small></td><td>${fmt(c.size)}</td><td><span class="swatch" style="background:${rgbCss(COLORS[c.mat])}"></span>${c.mat}</td>`;
+      tbody.appendChild(r);
+    });
+  });
+
+  // ===== 3D 뷰어 =====
+  const container = document.getElementById("viewer");
+  if (typeof THREE === "undefined") {
+    document.getElementById("error").style.display = "block";
+  } else {
+    init();
+  }
+
+  function init() {
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.prepend(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.01, 50);
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.65));
+    const sun = new THREE.DirectionalLight(0xffffff, 0.75);
+    // 게임에서 캐릭터가 카메라를 볼 때처럼 앞쪽 위에서 비춤 (three.js -Z = 캐릭터 정면)
+    sun.position.set(-1.5, 3, -2.5);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
+    Object.assign(sun.shadow.camera, { left: -1.5, right: 1.5, top: 1.5, bottom: -1.5, near: 0.1, far: 10 });
+    scene.add(sun);
+
+    // Unity(왼손 좌표) → three.js(오른손 좌표): z 부호를 뒤집는다
+    const u = ([x, y, z]) => new THREE.Vector3(x, y, -z);
+
+    const materials = {};
+    for (const [k, c] of Object.entries(COLORS)) {
+      materials[k] = new THREE.MeshStandardMaterial({ color: new THREE.Color(...c), roughness: 0.9, metalness: 0 });
+    }
+
+    const character = new THREE.Group();
+    scene.add(character);
+    const pivots = {};
+    const meshesByPart = {};
+    const box = new THREE.BoxGeometry(1, 1, 1);
+
+    PARTS.forEach(p => {
+      const pivot = new THREE.Group();
+      pivot.position.copy(u(p.pivot));
+      character.add(pivot);
+      pivots[p.name] = pivot;
+      meshesByPart[p.name] = [];
+      p.cubes.forEach(c => {
+        const mesh = new THREE.Mesh(box, materials[c.mat].clone());
+        mesh.scale.set(...c.size);
+        mesh.position.copy(u(c.pos));
+        mesh.castShadow = true; mesh.receiveShadow = true;
+        mesh.userData = { part: p.name, cube: c.name };
+        pivot.add(mesh);
+        meshesByPart[p.name].push(mesh);
+      });
+    });
+
+    // 관절 피벗 표시
+    const pivotMarkers = [];
+    const markerMat = new THREE.MeshBasicMaterial({ color: 0xff3b6b, depthTest: false });
+    PARTS.filter(p => p.joint).forEach(p => {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.025, 16, 12), markerMat);
+      m.renderOrder = 10;
+      pivots[p.name].add(m);
+      pivotMarkers.push(m);
+    });
+
+    // 크기 비교용 타일 1칸 (1 × 0.5 × 1, 윗면 y = 0)
+    const tile = new THREE.Mesh(new THREE.BoxGeometry(1, 0.5, 1),
+      new THREE.MeshStandardMaterial({ color: new THREE.Color(0.55, 0.80, 0.35), roughness: 0.95 }));
+    tile.position.y = -0.25;
+    tile.receiveShadow = true;
+    scene.add(tile);
+
+    const grid = new THREE.GridHelper(4, 40, 0x7f8ca0, 0xa9b4c4);
+    grid.material.transparent = true; grid.material.opacity = 0.35;
+    grid.position.y = -0.501;
+    scene.add(grid);
+
+    // ===== 궤도 카메라 (드래그 회전 / 휠 확대) =====
+    const target = new THREE.Vector3(0, 0.5, 0);
+    const orbit = { yaw: 0, pitch: 0, dist: 3 };
+    let anim = null;
+
+    // three.js 기준 yaw: 0 = 캐릭터 정면(Unity +Z = three -Z)에서 바라봄
+    const VIEWS = {
+      front: { yaw: 0, pitch: 0.12, dist: 2.6 },
+      back:  { yaw: Math.PI, pitch: 0.12, dist: 2.6 },
+      side:  { yaw: Math.PI / 2, pitch: 0.08, dist: 2.6 },
+      diag:  { yaw: 0.6, pitch: 0.35, dist: 2.8 },
+      // 게임 카메라: offset (0, 5, -4.5) → 캐릭터 뒤쪽 위. 시작 시 캐릭터가 카메라를 보도록 180° 회전된 상태와 같음
+      game:  { yaw: 0, pitch: Math.atan2(5 - 0.5, 4.5), dist: Math.hypot(4.5, 4.5) },
+    };
+
+    function applyCamera() {
+      const cp = Math.cos(orbit.pitch);
+      camera.position.set(
+        target.x + orbit.dist * cp * Math.sin(orbit.yaw),
+        target.y + orbit.dist * Math.sin(orbit.pitch),
+        target.z - orbit.dist * cp * Math.cos(orbit.yaw));
+      camera.lookAt(target);
+    }
+    function goView(name) {
+      const v = VIEWS[name];
+      let dy = v.yaw - orbit.yaw;
+      dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      anim = { from: { ...orbit }, to: { yaw: orbit.yaw + dy, pitch: v.pitch, dist: v.dist }, t: 0 };
+    }
+    Object.assign(orbit, VIEWS.diag);
+
+    let dragging = false, lastX = 0, lastY = 0;
+    const pointers = new Map();
+    let pinchStart = 0, pinchDist = 0;
+    container.addEventListener("pointerdown", e => {
+      container.setPointerCapture(e.pointerId);
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        pinchStart = Math.hypot(a.x - b.x, a.y - b.y); pinchDist = orbit.dist;
+      }
+      dragging = true; lastX = e.clientX; lastY = e.clientY; anim = null;
+    });
+    container.addEventListener("pointermove", e => {
+      if (!pointers.has(e.pointerId)) return;
+      pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pointers.size === 2) {
+        const [a, b] = [...pointers.values()];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (pinchStart > 0) orbit.dist = THREE.MathUtils.clamp(pinchDist * pinchStart / d, 1.2, 8);
+        return;
+      }
+      if (!dragging) return;
+      orbit.yaw -= (e.clientX - lastX) * 0.01;
+      orbit.pitch = THREE.MathUtils.clamp(orbit.pitch + (e.clientY - lastY) * 0.01, -0.3, 1.4);
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    const endPointer = e => { pointers.delete(e.pointerId); if (pointers.size === 0) dragging = false; pinchStart = 0; };
+    container.addEventListener("pointerup", endPointer);
+    container.addEventListener("pointercancel", endPointer);
+    container.addEventListener("wheel", e => {
+      e.preventDefault();
+      orbit.dist = THREE.MathUtils.clamp(orbit.dist * (1 + Math.sign(e.deltaY) * 0.1), 1.2, 8);
+      anim = null;
+    }, { passive: false });
+
+    document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => goView(b.dataset.view)));
+
+    const opt = id => document.getElementById(id);
+    const sync = () => { pivotMarkers.forEach(m => m.visible = opt("opt-pivots").checked); tile.visible = opt("opt-tile").checked; grid.visible = tile.visible; };
+    ["opt-pivots", "opt-tile"].forEach(id => opt(id).addEventListener("change", sync));
+    sync();
+
+    // 파츠 표 hover → 강조
+    let highlighted = [];
+    function highlight(part, cube) {
+      highlighted.forEach(m => m.material.emissive.setHex(0x000000));
+      highlighted = [];
+      if (!part) return;
+      highlighted = meshesByPart[part].filter(m => !cube || m.userData.cube === cube);
+      highlighted.forEach(m => m.material.emissive.setHex(0x335599));
+    }
+    tbody.addEventListener("mouseover", e => { const r = e.target.closest("tr"); if (r) highlight(r.dataset.part, r.dataset.cube); });
+    tbody.addEventListener("mouseleave", () => highlight(null));
+
+    function resize() {
+      const w = container.clientWidth, h = container.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(container);
+    resize();
+
+    const clock = new THREE.Clock();
+    let swingT = 0;
+    function frame() {
+      const dt = Math.min(clock.getDelta(), 0.05);
+      if (anim) {
+        anim.t = Math.min(1, anim.t + dt * 2.5);
+        const k = 1 - Math.pow(1 - anim.t, 3);
+        for (const key of ["yaw", "pitch", "dist"]) orbit[key] = anim.from[key] + (anim.to[key] - anim.from[key]) * k;
+        if (anim.t >= 1) anim = null;
+      } else if (opt("opt-spin").checked && !dragging) {
+        orbit.yaw += dt * 0.6;
+      }
+
+      // 관절 흔들기: 피벗 기준 회전 확인용 (3단계 애니메이션 아님)
+      if (opt("opt-swing").checked) {
+        swingT += dt;
+        const s = Math.sin(swingT * 4) * 0.6;
+        pivots.Arm_L.rotation.x = s; pivots.Arm_R.rotation.x = -s;
+        pivots.Leg_L.rotation.x = -s * 0.8; pivots.Leg_R.rotation.x = s * 0.8;
+        pivots.Head.rotation.y = Math.sin(swingT * 2) * 0.35;
+      } else {
+        swingT = 0;
+        for (const n of ["Arm_L", "Arm_R", "Leg_L", "Leg_R", "Head"]) pivots[n].rotation.set(0, 0, 0);
+      }
+
+      applyCamera();
+      renderer.render(scene, camera);
+      requestAnimationFrame(frame);
+    }
+    frame();
+  }
+</script>
+</body>
+</html>
